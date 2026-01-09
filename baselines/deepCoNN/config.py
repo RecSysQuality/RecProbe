@@ -6,9 +6,9 @@ import torch
 
 class Config:
     device = torch.device("cuda:0")
-    # device = torch.device("cpu")
-
-    dataset = 'amazon_beauty'
+    #device = torch.device("cpu")
+    model = 'NARRE'
+    dataset = 'yelp'
     word2vec_file = 'embedding/glove.6B.50d.txt'
     train_file = f'data/{dataset}/train.csv'
     valid_file = f'data/{dataset}/valid.csv'
@@ -18,7 +18,9 @@ class Config:
     path_inter_train = f'data/{dataset}/train.pt'
     path_inter_vali = f'data/{dataset}/vali.pt'
     path_inter_test = f'data/{dataset}/test.pt'
-    model = 'NARRE'
+    path_inter_train_narre = f'data/{dataset}/train_narre.pt'
+    path_inter_vali_narre = f'data/{dataset}/vali_narre.pt'
+    path_inter_test_narre = f'data/{dataset}/test_narre.pt'
     if model == 'DeepCoNN':
         if dataset == 'amazon_beauty':
             review_count = 30  # pochi item per utente
@@ -73,56 +75,72 @@ class Config:
             early_stop = 10
     else:
         if model == 'NARRE':
+            save_path = f'data/{dataset}/results_narre.json'
+
             word_dim = 50  # dimensione embedding parole (GloVe 50d)
-            id_dim = 32  # dimensione embedding user/item
-            dropout_prob = 0.4
+
+            vocab_size = 1291148
+            early_stop=10
             if dataset == 'amazon_beauty':
-                review_count = 30
-                review_length = 40
-                lowest_review_count = 2
-
-                train_epochs = 50
-                batch_size = 32
-                learning_rate = 0.001
-                learning_rate_decay = 0.98
-
-                l2_regularization = 5e-2
-                dropout_prob = 0.8
-
-                kernel_deep = 8  # NARRE usa kernel_deep
+                review_count = 10
+                kernel_count = 16
+                kernel_deep = 4
+                learning_rate = 0.005
+                batch_size = 16
+                early_stop = 5
                 kernel_size = 3
-
-
-            elif dataset == 'amazon_baby':
-                review_count = 20
-                review_length = 50
-                lowest_review_count = 2
-
-                train_epochs = 30
-                batch_size = 128
-                learning_rate = 0.0001
+                l2_regularization = 1e-2
                 learning_rate_decay = 0.99
-
-                l2_regularization = 1e-4
-                dropout_prob = 0.3
-
-                kernel_deep = 32
-                kernel_size = 3
-            else:
-                review_count = 20
-                review_length = 100
-                lowest_review_count = 5
-
-                batch_size = 128
                 train_epochs = 30
-                learning_rate = 1e-4
-                learning_rate_decay = 0.995
-
-                l2_regularization = 1e-4
-                dropout_prob = 0.4
-
-                kernel_deep = 64
+                review_length = 30  # ↓ da 40 (focus su review brevi)
+                id_emb_size = 32  # ↓ da 64 → 32 (meno parametri)
+                filters_num = 64  # ↓ da 128 → 64 (sufficiente per piccolo dataset)
+                drop_out = 0.3  # ↓ da 0.4 → 0.3 (ancora meno regolarizzazione)
+                #learning_rate = 0.0005  # ↓ da 0.001 → 0.0005 (convergenza lenta ma stabile)
+                #early_stop = 15  # Più pazienza
+                #l2_regularization = 1e-5  # ↓ da 5e-5 → 1e-5 (molto leggero)
+                #train_epochs = 30  # Molte epoche, early stopping salverà
+            elif dataset == 'amazon_baby':
+                #review_count = 20  # ↑ da 10 (più contesto)
+                #review_length = 50  # ↑ da 30 (review più lunghe)
+                id_emb_size = 32  # ↑ da 32 → 64 (più espressività)
+                #filters_num = 128  # ↑ da 64 → 128 (più feature CNN)
+                #vocab_size = 10000
+                drop_out = 0.4  # ↑ da 0.3 → 0.4 (leggermente più regolarizzazione)
                 kernel_size = 3
+                kernel_count = 16  # Puoi usarlo per multi-kernel
+                kernel_deep = 4  # Idem
+                learning_rate = 0.002  # ↓ da 0.005 → 0.002 (stabile con rete più grande)
+                #batch_size = 64  # ↑ da 16 → 64 (efficienza)
+                early_stop = 12  # Più pazienza
+                l2_regularization = 5e-5  # ↓ da 1e-2 → 5e-5 (molto leggero)
+                learning_rate_decay = 0.98  # Leggermente più aggressivo
+                train_epochs = 60  # Più epoche
+                review_count = 20
+                review_length = 30
+                filters_num = 64
+                batch_size = 64
+            else:
+                # review_count = 20  # ↑ da 10 (più contesto)
+                # review_length = 50  # ↑ da 30 (review più lunghe)
+                id_emb_size = 32  # ↑ da 32 → 64 (più espressività)
+                # filters_num = 128  # ↑ da 64 → 128 (più feature CNN)
+                # vocab_size = 10000
+                drop_out = 0.4  # ↑ da 0.3 → 0.4 (leggermente più regolarizzazione)
+                kernel_size = 3
+                kernel_count = 16  # Puoi usarlo per multi-kernel
+                kernel_deep = 4  # Idem
+                learning_rate = 0.0001  # ↓ da 0.005 → 0.002 (stabile con rete più grande)
+                # batch_size = 64  # ↑ da 16 → 64 (efficienza)
+                early_stop = 12  # Più pazienza
+                l2_regularization = 1e-5  # ↓ da 1e-2 → 5e-5 (molto leggero)
+                learning_rate_decay = 0.99  # Leggermente più aggressivo
+                train_epochs = 30  # Più epoche
+                review_count = 20
+                review_length = 30
+                filters_num = 64
+                batch_size = 128
+
 
     PAD_WORD = '<UNK>'
 

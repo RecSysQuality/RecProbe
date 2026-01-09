@@ -9,7 +9,7 @@ from nltk.tokenize import WordPunctTokenizer
 os.chdir(sys.path[0])
 
 
-def process_dataset(json_path, select_cols, train_rate, csv_path):
+def process_dataset(json_path, select_cols, train_rate, csv_path,dataset):
     print('#### Read the json file...')
     # if json_path.endswith('gz'):
     #     df = pd.read_json(json_path, lines=True, compression='gzip')
@@ -38,10 +38,14 @@ def process_dataset(json_path, select_cols, train_rate, csv_path):
 
     df = df.drop(df[[not isinstance(x, str) or len(x) == 0 for x in df['review']]].index)  # erase null reviews
     df['review'] = df['review'].apply(clean_review)
+    if dataset == 'yelp':
 
-    train, valid = train_test_split(df, test_size=0.6, random_state=3)  # split dataset including random
-    valid, test = train_test_split(valid, test_size=0.5, random_state=4)
-    valid, test = train_test_split(valid, test_size=0.5, random_state=4)
+        train, valid = train_test_split(df, test_size=0.6, random_state=3)  # split dataset including random
+        valid, test = train_test_split(valid, test_size=0.5, random_state=4)
+        valid, test = train_test_split(valid, test_size=0.5, random_state=4)
+    else:
+        train, valid = train_test_split(df, test_size=0.2, random_state=3)  # split dataset including random
+        valid, test = train_test_split(valid, test_size=0.5, random_state=4)
     os.makedirs(csv_path, exist_ok=True)
     train.to_csv(os.path.join(csv_path, 'train.csv'), index=False, header=False)
     valid.to_csv(os.path.join(csv_path, 'valid.csv'), index=False, header=False)
@@ -56,15 +60,15 @@ if __name__ == '__main__':
     base_dir ='/code/'
 
     parser.add_argument('--data_path', dest='data_path',
-                        default=os.path.join(base_dir, "cornac_data","yelp","inter_full.csv"),
+                        default=os.path.join(base_dir, "cornac_data","amazon_baby","inter_full.csv"),
                         help='Selected columns of above dataset in json format.')
     parser.add_argument('--select_cols', dest='select_cols', nargs='+',
                         default=['user_id', 'item_id', 'review_text', 'rating'])
     parser.add_argument('--train_rate', dest='train_rate', default=0.4)
-    parser.add_argument('--dataset', dest='dataset', default="yelp")
-    parser.add_argument('--save_dir', dest='save_dir', default=os.path.join(base_dir, "deepconn/DeepCoNN-master", "data","yelp"))
+    parser.add_argument('--dataset', dest='dataset', default="amazon_baby")
+    parser.add_argument('--save_dir', dest='save_dir', default=os.path.join(base_dir, "deepconn/DeepCoNN-master", "data","amazon_baby"))
     args = parser.parse_args()
     start_time = time.perf_counter()
-    process_dataset(args.data_path, args.select_cols, args.train_rate, args.save_dir)
+    process_dataset(args.data_path, args.select_cols, args.train_rate, args.save_dir, args.dataset)
     end_time = time.perf_counter()
     print(f'## preprocess.py: Data loading complete! Time used {end_time - start_time:.0f} seconds.')

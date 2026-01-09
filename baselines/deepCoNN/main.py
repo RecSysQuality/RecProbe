@@ -1,5 +1,7 @@
 import os
 import time
+
+from pyarrow.dataset import dataset
 from tqdm import tqdm
 import torch
 from torch.nn import functional as F
@@ -8,9 +10,9 @@ import numpy as np
 import json
 from config import Config
 from model import DeepCoNN
-from utils import load_embedding, DeepCoNNDataset, predict_mse, date
+from narre import NARRE
+from utils import load_embedding, DeepCoNNDataset, predict_mse, date,NARREDataset,load_optimal_embedding,load_top_embeddings
 import random
-from narre import NarreModel
 def set_seed(seed=42):
     random.seed(seed)
     np.random.seed(seed)
@@ -37,13 +39,15 @@ def train(train_dataloader, valid_dataloader, model, config, model_path):
         total_loss, total_samples = 0, 0
         pbar = tqdm(train_dataloader, desc=f"Epoch {epoch}")
         for batch in pbar:
-            user_reviews, item_reviews, ratings = map(lambda x: x.to(config.device), batch)
-
-            if config.model == 'NARRE':
+            if config.model == 'DeepCoNN':
+                user_reviews, item_reviews, ratings = map(lambda x: x.to(config.device), batch)
                 predict = model(user_reviews, item_reviews)
-
             else:
-                predict = model(user_reviews, item_reviews)
+                user_reviews, item_reviews, uids, iids, user_item2id, item_user2id, user_doc, item_doc, ratings = \
+                    [x.to(config.device) for x in batch]
+
+                datas = [user_reviews, item_reviews, uids, iids, user_item2id, item_user2id, user_doc, item_doc]
+                predict = model(datas)
 
             loss = F.mse_loss(predict, ratings, reduction='sum')  # 平方和误差
             opt.zero_grad()  # 梯度清零
@@ -55,7 +59,7 @@ def train(train_dataloader, valid_dataloader, model, config, model_path):
 
         lr_sch.step()
         model.eval()  # 停止训练状态
-        valid_mse = predict_mse(model, valid_dataloader, config.device)
+        valid_mse = predict_mse(model, valid_dataloader, config.device,config.model)
         train_loss = total_loss / total_samples
         print(f"{date()}#### Epoch {epoch:3d}; train mse {train_loss:.6f}; validation mse {valid_mse:.6f}")
 
@@ -93,7 +97,7 @@ def test(dataloader, model,save_path,config):
         return d
 
     start_time = time.perf_counter()
-    test_loss = predict_mse(model, dataloader, config.device)
+    test_loss = predict_mse(model, dataloader, config.device,config.model)
     end_time = time.perf_counter()
     print(f"{date()}## Test end, test mse is {test_loss:.6f}, time used {end_time - start_time:.0f} seconds.")
     # Prepara i dati da salvare
@@ -189,29 +193,67 @@ if __name__ == '__main__':
     config = Config()
     print(config)
     print(f'{date()}## Load embedding and data...')
-    word_emb, word_dict = load_embedding(config.word2vec_file)
-    print('loading training...')
-    train_dataset = DeepCoNNDataset(config.train_file, word_dict, config,save_path=config.path_inter_train)
-    print('loading validation...')
-    valid_dataset = DeepCoNNDataset(config.valid_file, word_dict, config, retain_rui=False,save_path=config.path_inter_vali)
-    print('loading test...')
-    test_dataset = DeepCoNNDataset(config.test_file, word_dict, config, retain_rui=False,save_path=config.path_inter_test)
-    print('loaded all')
+
+    if config.model == 'DeepCoNN':
+        word_emb, word_dict = load_embedding(config.word2vec_file)
+
+        print('loading training...')
+        train_dataset = DeepCoNNDataset(config.train_file, word_dict, config,save_path=config.path_inter_train)
+        print('loading validation...')
+        valid_dataset = DeepCoNNDataset(config.valid_file, word_dict, config, retain_rui=False,save_path=config.path_inter_vali)
+        print('loading test...')
+        test_dataset = DeepCoNNDataset(config.test_file, word_dict, config, retain_rui=False,save_path=config.path_inter_test)
+        print('loaded all')
+    else:
+        if config.vocab_size < 1291148:  # Vocabolario ridotto
+            all_data_paths = [
+                config.train_file,  # train.csv
+                config.valid_file,  # val.csv
+                config.test_file  # test.csv
+            ]
+
+
+            print("🚀 Modalità VOCAB OTTIMALE attivata!")
+            word_emb, word_dict = load_top_embeddings(
+                all_data_paths,  # ← Train+Val+Test!
+                config.word2vec_file,
+                config.vocab_size  # 5000
+            )
+            print(len(word_emb))
+            config.vocab_size = len(word_emb)
+            # dimensione di ogni embedding (dovrebbe essere costante)
+            print(len(word_emb[0]))
+            print(len(word_emb[1]))
+ # Auto-update!
+            print(f"✅ Vocabolario: {config.vocab_size}")
+        else:
+            print("📚 Vocabolario globale completo")
+            word_emb, word_dict = load_embedding(config.word2vec_file)
+
+        print('loading training...')
+        train_dataset = NARREDataset(config.train_file, word_dict, config,save_path=config.path_inter_train_narre)
+        print('loading validation...')
+        valid_dataset = NARREDataset(config.valid_file, word_dict, config,save_path=config.path_inter_vali_narre)
+        print('loading test...')
+        test_dataset = NARREDataset(config.test_file, word_dict, config,save_path=config.path_inter_test_narre)
+        print('loaded all')
+
     train_dlr = DataLoader(train_dataset, batch_size=config.batch_size, shuffle=True)
     valid_dlr = DataLoader(valid_dataset, batch_size=config.batch_size)
     test_dlr = DataLoader(test_dataset, batch_size=config.batch_size)
-
     if config.model == 'DeepCoNN':
         model = DeepCoNN(config, word_emb).to(config.device)
-    elif config.model == 'NARRE':
+    else:
+        # Unisci tutti gli ID per calcolare numero totale utenti/item
+        all_uids = torch.cat([train_dataset.uids, valid_dataset.uids, test_dataset.uids])
+        all_iids = torch.cat([train_dataset.iids, valid_dataset.iids, test_dataset.iids])
 
-        all_users = train_dataset.user_reviews.shape[0] + valid_dataset.user_reviews.shape[0] + \
-                    test_dataset.user_reviews.shape[0]
-        all_items = train_dataset.item_reviews.shape[0] + valid_dataset.item_reviews.shape[0] + \
-                    test_dataset.item_reviews.shape[0]
-        config.user_count = all_users
-        config.item_count = all_items
-        model = NarreModel(config, word_emb).to(config.device)
+        config.user_num = len(torch.unique(all_uids))
+        config.item_num = len(torch.unique(all_iids))
+
+        print(f"Utenti totali: {config.user_num}, Item totali: {config.item_num}")
+        word_emb = torch.tensor(word_emb, dtype=torch.float)
+        model = NARRE(config, word_emb).to(config.device)
 
     del train_dataset, valid_dataset, test_dataset, word_emb, word_dict
 
