@@ -1,0 +1,12 @@
+dataset/
+data/
+checkpoint/
+cornac_data/
+*.csv
+*.json
+*.parquet
+
+# Ignora cache e log
+__pycache__/
+*.log
+*.pyc
