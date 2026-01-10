@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 import numpy as np
 import json
 from config import Config
-from model import DeepCoNN
+from deepconn import DeepCoNN
 from narre import NARRE
 from utils import load_embedding, DeepCoNNDataset, predict_mse, date,NARREDataset,load_optimal_embedding,load_top_embeddings
 import random
