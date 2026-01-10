@@ -35,7 +35,7 @@ def train(train_dataloader, valid_dataloader, model, config, model_path):
     count_epochs = 0
     best_loss, best_epoch = 100, 0
     for epoch in tqdm(range(config.train_epochs), desc="Epochs", leave=False):
-        model.train()  # 将模型设置为训练状态
+        model.train()  
         total_loss, total_samples = 0, 0
         pbar = tqdm(train_dataloader, desc=f"Epoch {epoch}")
         for batch in pbar:
@@ -49,16 +49,16 @@ def train(train_dataloader, valid_dataloader, model, config, model_path):
                 datas = [user_reviews, item_reviews, uids, iids, user_item2id, item_user2id, user_doc, item_doc]
                 predict = model(datas)
 
-            loss = F.mse_loss(predict, ratings, reduction='sum')  # 平方和误差
-            opt.zero_grad()  # 梯度清零
-            loss.backward()  # 反向传播计算梯度
-            opt.step()  # 根据梯度信息更新所有可训练参数
+            loss = F.mse_loss(predict, ratings, reduction='sum')  
+            opt.zero_grad() 
+            loss.backward()  
+            opt.step()  
 
             total_loss += loss.item()
             total_samples += len(predict)
 
         lr_sch.step()
-        model.eval()  # 停止训练状态
+        model.eval()  
         valid_mse = predict_mse(model, valid_dataloader, config.device,config.model)
         train_loss = total_loss / total_samples
         print(f"{date()}#### Epoch {epoch:3d}; train mse {train_loss:.6f}; validation mse {valid_mse:.6f}")
@@ -149,40 +149,7 @@ def create_ranking_dataloader(test_df, train_val_seen, all_items, num_neg=100, b
     dataset = TensorDataset(torch.stack(urs), torch.stack(irs), torch.tensor(labels))
     return DataLoader(dataset, batch_size=batch_size, shuffle=False)
 
-def recall_at_k(scores, labels, k):
-    top_k_idx = np.argsort(scores)[-k:][::-1]  # decrescente
-    hits = np.sum(labels[top_k_idx])
-    return hits / np.sum(labels) if np.sum(labels) > 0 else 0
 
-def ndcg_at_k(scores, labels, k):
-    top_k_idx = np.argsort(scores)[-k:][::-1]
-    dcg = np.sum(labels[top_k_idx] / np.log2(np.arange(2, k+2)))
-    idcg = np.sum(np.sort(labels[-k:])[::-1] / np.log2(np.arange(2, k+2)))
-    return dcg / idcg if idcg > 0 else 0
-
-
-def evaluate_ranking(dataloader, model, device):
-    model.eval()
-    k_list = [10, 50]
-    recalls_per_k = {k: [] for k in k_list}
-    ndcgs_per_k = {k: [] for k in k_list}
-
-    with torch.no_grad():
-        for batch in dataloader:
-            urs, irs, labels_batch = [x.to(device) for x in batch]  # labels invece di rats
-
-            scores = model(urs, irs).cpu().numpy()
-            labels = labels_batch.cpu().numpy()
-
-            # Per OGNI utente nel batch (assumi 1 utente per riga)
-            for u_scores, u_labels in zip(scores, labels):
-                for k in k_list:
-                    recalls_per_k[k].append(recall_at_k(u_scores, u_labels, k))
-                    ndcgs_per_k[k].append(ndcg_at_k(u_scores, u_labels, k))
-
-    results = {f"Recall@{k}": np.mean(recalls_per_k[k]) for k in k_list}
-    results.update({f"NDCG@{k}": np.mean(ndcgs_per_k[k]) for k in k_list})
-    return results
 
 
 # Usage:
@@ -260,27 +227,3 @@ if __name__ == '__main__':
     os.makedirs(os.path.dirname(config.model_file), exist_ok=True)  # 文件夹不存在则创建
     train(train_dlr, valid_dlr, model, config, config.model_file)
     test(test_dlr, torch.load(config.model_file),config.save_path,config)
-
-    # # 1. all_items: TUTTI gli item unici nei tuoi dati
-    # val_df = pd.read_csv(config.valid_file)
-    # train_df = pd.read_csv(config.train_file)
-    # test_df = pd.read_csv(config.test_file)
-    #
-    # all_items = set(pd.concat([train_df,val_df,test_df])['itemID'].unique())
-    #
-    # # 2. user_seen: item visti in train+val per utente
-    # user_seen = defaultdict(set)
-    # for df in [train_df, val_df]:
-    #     for _, row in df.iterrows():
-    #         user_seen[row['userID']].add(row['itemID'])
-    #
-    # user_seen = dict(user_seen)  # {user_id: {item1, item2, ...}}
-    #
-    # ranking_dl = create_ranking_dataloader(test_df, user_seen, all_items)
-    # results = evaluate_ranking(ranking_dl, model, device)
-    # #print("Recall@10: {:.4f}, Recall@50: {:.4f}".format(metrics["Recall@10"], metrics["Recall@50"]))
-    # #print("NDCG@10: {:.4f}, NDCG@50: {:.4f}".format(metrics["NDCG@10"], metrics["NDCG@50"]))
-    #
-    # #metrics = evaluate_ranking(test_dlr, model, config.device)
-    # #print("Recall@10: {:.4f}, Recall@50: {:.4f}".format(metrics["Recall@10"], metrics["Recall@50"]))
-    # #print("NDCG@10: {:.4f}, NDCG@50: {:.4f}".format(metrics["NDCG@10"], metrics["NDCG@50"]))
