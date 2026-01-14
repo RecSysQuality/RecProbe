@@ -1,0 +1,65 @@
+context:  realistic_noise  # add | remove | corrupt
+total_budget: 5000 # budget of ratings to add/remove/corrupt
+avoid_duplicates: true # if true, avoid adding duplicate ratings (same user-item pair) -- true for human-based operations
+
+# context 1 --  add / remove ratings with realistic noise injection
+realistic_noise:
+  operation: add                      # add | remove
+  target: item                        # user | item -- if user, add (remove) ratings from selected users to random items; if item, add (remove) ratings to selected items from random users;
+  selection_strategy: uniform         # uniform | top | least  -- top (least) means focusing on most (least) active users or popular items
+#  k: 100                              # maximum nodes to add/remove ratings from given the allocated budget
+  # how many ratings to add/remove per node (user/item)
+  preserve_degree_distribution: true # preserve original user/item degree distribution and avoid intentional hubs
+  max_ratings_per_node: 50            # .inf means no limit
+  min_ratings_per_node: 1             # min ratings added per node
+  rating_behavior:
+    min_rating: 1
+    max_rating: 5
+    sampling_strategy: gaussian  # gaussian | uniform
+  temporal_interval:
+    start_timestamp: 1609459200      # start of temporal interval (inclusive) in UNIX timestamp format
+    end_timestamp: 1640995200
+# context 2 -- item burst noise. Create item hubs by adding many ratings to few items
+item_burst_noise:
+  operation: add                      # add is default
+  target: item                        # item is default
+  selection_strategy: uniform         # uniform | top | least  -- top (least) means focusing on most (least) active users or popular items
+#  hubs: 100                           # maximum number of hubs created with the provided budget -- the least, the higher the hubs will be
+  max_ratings_per_node: .inf          # .inf means no limit
+  min_ratings_per_node: 1             # min ratings added per node
+  rating_behavior:
+    min_rating: 1
+    max_rating: 5
+    sampling_strategy: gaussian  # gaussian | uniform
+  temporal_interval:
+    start_timestamp: 1609459200      # start of temporal interval (inclusive) in UNIX timestamp format
+    end_timestamp: 1640995200        # end of temporal interval (inclusive) in UNIX timestamp format
+
+# context 3 -- user burst noise. Create user hubs by adding many ratings to few users
+user_burst_noise:
+  operation: add                      # add is default
+  target: user                        # user is default
+  selection_strategy: uniform         # uniform | top | least  -- top (least) means focusing on most (least) active users or popular items
+#  hubs: 100                           # number of hubs created -- the least, the higher the hubs will be
+  max_ratings_per_node: .inf            # inf means no limit
+  min_ratings_per_node: 1             # min ratings added per node
+  rating_behavior:
+    min_rating: 1
+    max_rating: 5
+    sampling_strategy: gaussian  # gaussian | uniform
+  temporal_interval:
+    start_timestamp: 1609459200      # start of temporal interval (inclusive) in UNIX timestamp format. set 0 to use original timestamps
+    end_timestamp: 1640995200        # end of temporal interval (inclusive) in UNIX timestamp format. set 0 to use original timestamps
+
+# context 4 --
+timestamp_corruption:
+  target: user                        # user | item  -- if user, corrupt timestamps of ratings from selected users; if item, corrupt timestamps of ratings to selected items;
+  selection_strategy: uniform           # uniform | top | least -- random selection of edges
+#  k: 100                              # maximum number of nodes to corrupt timestamp of
+  temporal_behavior:
+    corruption_mode: uniform    # uniform | forward | backward
+    intensity: medium                 # low | medium | high -- low = days, medium = months, high = years
+  rating_behavior:                    # what ratings to corrupt timestamps of
+    min_rating: 1
+    max_rating: 5
+    sampling_strategy: uniform        # uniform | gaussian

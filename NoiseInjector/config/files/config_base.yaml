@@ -1,0 +1,33 @@
+input:
+  reviews:
+    path: data/All_Beauty.jsonl
+    format: jsonl
+    separator: ','
+  items:
+    path: data/items.csv
+    format: csv
+    separator: ','
+
+output:
+  reviews:
+    path: data/All_Beauty.jsonl
+    format: jsonl
+    # target: cornac | recbole
+  items:
+    path: data/meta_All_Beauty.jsonl
+    format: jsonl
+    # target: cornac | recbole
+
+noise_profile: rating  # rating | review | combined
+kcore: 5
+random_seed: 42
+verbose: true
+dataset: 'amazon'              # amazon | yelp
+
+
+
+
+
+
+
+

@@ -1,0 +1,28 @@
+2026-01-13 10:33:07,831 | INFO | Loading JSONL file in chunks from ../data/All_Beauty.jsonl
+2026-01-13 10:33:14,815 | INFO | Finished loading JSONL file from ../data/All_Beauty.jsonl
+2026-01-13 10:33:14,933 | INFO | Loaded df with 701528 records
+2026-01-13 10:33:15,349 | INFO | Unique users: 631986, Unique items: 112565
+2026-01-13 10:33:15,681 | INFO | Rating stats:
+count    701528.000000
+mean          3.960245
+std           1.494452
+min           1.000000
+25%           3.000000
+50%           5.000000
+75%           5.000000
+max           5.000000
+Name: rating, dtype: float64
+2026-01-13 10:33:15,684 | INFO | Rating value counts:
+rating
+1    102080
+2     43034
+3     56307
+4     79381
+5    420726
+Name: count, dtype: int64
+2026-01-13 10:33:15,684 | INFO | Average items per user:
+1.11
+2026-01-13 10:33:15,684 | INFO | Average users per item:
+6.23
+2026-01-13 10:33:15,684 | INFO | Sparsity of the dataset: 
+0.999990

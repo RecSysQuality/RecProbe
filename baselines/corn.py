@@ -270,7 +270,7 @@ def run_narre(df_path):
     exp.run()
 
 
-def run_hft(df_path):
+def run_ctr_review(df_path):
     # --- Step 1: leggi le review user-item ---
     reviews_path = os.path.join(df_path, "inter_full.csv")
     reviews_df = pd.read_csv(reviews_path, sep=',', quotechar='"')
@@ -351,111 +351,46 @@ def run_hft(df_path):
     #     seed=123,
     # )
 
+
+
+
+
+
+
+    ctr = cornac.models.CTR(k=50, max_iter=50, lambda_v=1)
     if dataset == 'amazon_beauty':
-        hft = cornac.models.HFT(
-            k=5,  # pochi fattori per velocità
-            max_iter=20,  # iterazioni brevi
-            grad_iter=2,  # pochi aggiornamenti per batch
-            l2_reg=0.001,
-            lambda_text=0.01,  # testo moderato
-            vocab_size=min(3000, vocab),  # ridotto
+        # CTR – piccolo dataset
+        ctr = cornac.models.CTR(
+            k=30,
+            max_iter=25,
+            lambda_v=1.0,
             seed=123,
         )
 
     elif dataset == 'amazon_baby':
-        hft = cornac.models.HFT(
-            k=10,  # più fattori
-            max_iter=40,  # iterazioni medie
-            grad_iter=5,  # aggiornamenti batch
-            l2_reg=0.001,
-            lambda_text=0.01,
-            vocab_size=min(5000, vocab),  # vocabolario moderato
+        # CTR – dataset medio
+        ctr = cornac.models.CTR(
+            k=30,
+            max_iter=25,
+            lambda_v=1.0,
             seed=123,
         )
 
     elif dataset == 'yelp':
-        hft = cornac.models.HFT(
-            k=10,  # più fattori per dataset grande
-            max_iter=40,  # più iterazioni
-            grad_iter=5,  # batch grad più numerosi
-            l2_reg=0.001,
-            lambda_text=0.01,  # testo rilevante ma non eccessivo
-            vocab_size=min(5000, vocab),  # vocabolario grande
+        # CTR – dataset grande
+        ctr = cornac.models.CTR(
+            k=30,
+            max_iter=25,
+            lambda_v=1.0,
             seed=123,
         )
-
-    # if dataset == 'amazon_beauty':
-    #     # HFT per amazon_beauty (piccolo dataset)
-    #     hft = cornac.models.HFT(
-    #         k=8,
-    #         max_iter=100,
-    #         grad_iter=5,
-    #         l2_reg=0.01,
-    #         lambda_text=0.02,
-    #         vocab_size=3000,
-    #         seed=123,
-    #     )
-    #
-    # elif dataset == 'amazon_baby':
-    #     # HFT per amazon_baby (dataset medio)
-    #     hft = cornac.models.HFT(
-    #         k=18,
-    #         max_iter=100,
-    #         grad_iter=7,
-    #         l2_reg=0.001,
-    #         lambda_text=0.03,
-    #         vocab_size=7000,
-    #         seed=123,
-    #     )
-    #
-    # elif dataset == 'yelp':
-    #     # HFT per yelp (dataset grande)
-    #     hft = cornac.models.HFT(
-    #         k=25,
-    #         max_iter=100,
-    #         grad_iter=10,
-    #         l2_reg=0.0005,
-    #         lambda_text=0.015,
-    #         vocab_size=10000,
-    #         seed=123,
-    #     )
-
-
-
-    # ctr = cornac.models.CTR(k=50, max_iter=50, lambda_v=1)
-    # if dataset == 'amazon_beauty':
-    #     # CTR – piccolo dataset
-    #     ctr = cornac.models.CTR(
-    #         k=30,
-    #         max_iter=25,
-    #         lambda_v=1.0,
-    #         seed=123,
-    #     )
-    #
-    # elif dataset == 'amazon_baby':
-    #     # CTR – dataset medio
-    #     ctr = cornac.models.CTR(
-    #         k=30,
-    #         max_iter=25,
-    #         lambda_v=1.0,
-    #         seed=123,
-    #     )
-    #
-    # elif dataset == 'yelp':
-    #     # CTR – dataset grande
-    #     ctr = cornac.models.CTR(
-    #         k=30,
-    #         max_iter=25,
-    #         lambda_v=1.0,
-    #         seed=123,
-    #     )
 
 
 
     # ---- Step 8: esperimento Cornac ----
     exp = cornac.Experiment(
         eval_method=ratio_split,
-        models=[hft],
+        models=[ctr],
         metrics=metrics_list,
         user_based=True
     )
@@ -628,24 +563,10 @@ def run_gru4rec(df_path, dataset):
         verbose=True,
         seed=123
     )
-    # print("Num users train:", next_item_eval.train_set.num_users)
-    # print("Num items train:", next_item_eval.train_set.num_items)
-    # print("Num ratings train:", next_item_eval.train_set.num_ratings)
-    # print("Num users test:", next_item_eval.test_set.num_users)
-    # print("Num ratings test:", next_item_eval.test_set.num_ratings)
 
     # Parametri GRU4Rec adattati per dataset size
     if dataset == 'amazon_beauty':
-        gru_model = GRU4Rec(
-            layers=[100],
-            loss="bpr-max",
-            n_sample=1024,
-            batch_size=64,
-            n_epochs=10,
-            seed=123,
-            device="cuda" if torch.cuda.is_available() else "cpu",
-            verbose=True
-        )
+
         gru_model = GRU4Rec(
             layers=[64],
             loss="cross-entropy",
@@ -661,27 +582,7 @@ def run_gru4rec(df_path, dataset):
         )
 
     elif dataset == 'amazon_baby':
-        gru_model = GRU4Rec(
-            layers=[100],
-            loss="bpr-max",
-            n_sample=2048,
-            batch_size=512,
-            n_epochs=50,
-            seed=123,
-            learning_rate=0.001,
-            verbose=True,
-            device="cuda" if torch.cuda.is_available() else "cpu",
-        )
-        gru_model = GRU4Rec(
-            layers=[50],  # ↓
-            loss="cross-entropy",  # CAMBIO CRITICO
-            batch_size=256,
-            n_epochs=100,
-            learning_rate=0.003,  # ↑
-            seed=123,
-            verbose=True,
-            device="cuda" if torch.cuda.is_available() else "cpu",
-        )
+
         gru_model = GRU4Rec(
             layers=[100],
             loss="cross-entropy",
@@ -697,26 +598,7 @@ def run_gru4rec(df_path, dataset):
         )
 
     elif dataset == 'yelp':
-        gru_model = GRU4Rec(
-            layers=[128],
-            loss="bpr-max",
-            n_sample=4096,
-            batch_size=2048,
-            n_epochs=100,
-            learning_rate=0.0005,
-            seed=123,
-            verbose=True,device="cuda" if torch.cuda.is_available() else "cpu",
-        )
-        gru_model = GRU4Rec(
-            layers=[100],
-            loss="cross-entropy",  # ← fondamentale
-            batch_size=1024,
-            n_epochs=150,
-            learning_rate=0.001,
-            seed=123,
-            verbose=True,
-            device="cuda" if torch.cuda.is_available() else "cpu",
-        )
+
         gru_model = GRU4Rec(
             layers=[100],
             loss="cross-entropy",
@@ -731,48 +613,6 @@ def run_gru4rec(df_path, dataset):
             device="cuda" if torch.cuda.is_available() else "cpu",
         )
 
-    # if dataset == 'amazon_beauty':  # piccolo
-    #     gru_model = GRU4Rec(
-    #         layers=[100],
-    #         loss="bpr-max",
-    #         n_sample=1024,
-    #         dropout_p_embed=0.0,
-    #         dropout_p_hidden=0.5,
-    #         sample_alpha=0.75,
-    #         batch_size=64,
-    #         n_epochs=2,
-    #         device="cuda" if torch.cuda.is_available() else "cpu",
-    #         verbose=True,
-    #         seed=123
-    #     )
-    # elif dataset == 'amazon_baby':  # medio
-    #     gru_model = GRU4Rec(
-    #         layers=[100, 100],
-    #         loss="bpr-max",
-    #         n_sample=2048,
-    #         dropout_p_embed=0.0,
-    #         dropout_p_hidden=0.5,
-    #         sample_alpha=0.75,
-    #         batch_size=512,
-    #         n_epochs=30,
-    #         device="cuda" if torch.cuda.is_available() else "cpu",
-    #         verbose=True,
-    #         seed=123
-    #     )
-    # else:  # grande
-    #     gru_model = GRU4Rec(
-    #         layers=[200, 200],
-    #         loss="bpr-max",
-    #         n_sample=4096,
-    #         dropout_p_embed=0.0,
-    #         dropout_p_hidden=0.5,
-    #         sample_alpha=0.75,
-    #         batch_size=1024,
-    #         n_epochs=50,
-    #         device="cuda" if torch.cuda.is_available() else "cpu",
-    #         verbose=True,
-    #         seed=123
-    #     )
 
     # Metriche per next-item/ranking
     metrics_list = [Recall(k=10), Recall(k=50), NDCG(k=10), NDCG(k=50)]
@@ -947,7 +787,7 @@ if __name__ == "__main__":
                 run_gru4rec(os.path.join(base_dir, "cornac_data", dataset), dataset)
             elif model == 'CTR':
                 run_ctr(os.path.join(base_dir, "cornac_data", dataset))
-            elif model == 'HFT':
-                run_hft(os.path.join(base_dir, "cornac_data", dataset))
+            elif model == 'CTR_Review':
+                run_ctr_review(os.path.join(base_dir, "cornac_data", dataset))
             elif model == 'NARRE':
                 run_narre(os.path.join(base_dir, "cornac_data", dataset))
