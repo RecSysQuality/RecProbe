@@ -1,0 +1,56 @@
+2026-01-15 16:25:25,099 | INFO | Loading JSONL file in chunks from ../data/input/amazon_All_Beauty/All_Beauty.jsonl
+2026-01-15 16:27:43,786 | INFO | Loaded df with 701528 records
+2026-01-15 16:27:44,106 | INFO | Unique users: 631986, Unique items: 112565
+2026-01-15 16:27:44,506 | INFO | Rating stats:
+count    701528.000000
+mean          3.960245
+std           1.494452
+min           1.000000
+25%           3.000000
+50%           5.000000
+75%           5.000000
+max           5.000000
+Name: rating, dtype: float64
+2026-01-15 16:27:44,510 | INFO | Rating value counts:
+rating
+1    102080
+2     43034
+3     56307
+4     79381
+5    420726
+Name: count, dtype: int64
+2026-01-15 16:27:44,510 | INFO | Average items per user:
+1.11
+2026-01-15 16:27:44,510 | INFO | Average users per item:
+6.23
+2026-01-15 16:27:44,510 | INFO | Sparsity of the dataset: 
+0.999990
+2026-01-15 16:27:51,370 | INFO | Extracting 5-core from the dataset
+2026-01-15 16:27:52,312 | INFO | Finished extracting 5-core. Remaining records: 3315
+2026-01-15 16:27:52,312 | INFO | Loaded df with 3315 records
+2026-01-15 16:27:52,313 | INFO | Unique users: 357, Unique items: 479
+2026-01-15 16:27:52,316 | INFO | Rating stats:
+count    3315.000000
+mean        4.234087
+std         1.092901
+min         1.000000
+25%         4.000000
+50%         5.000000
+75%         5.000000
+max         5.000000
+Name: rating, dtype: float64
+2026-01-15 16:27:52,317 | INFO | Rating value counts:
+rating
+1     151
+2     141
+3     353
+4     806
+5    1864
+Name: count, dtype: int64
+2026-01-15 16:27:52,317 | INFO | Average items per user:
+9.29
+2026-01-15 16:27:52,317 | INFO | Average users per item:
+6.92
+2026-01-15 16:27:52,317 | INFO | Sparsity of the dataset: 
+0.980614
+2026-01-15 16:27:52,828 | INFO | Finished loading JSONL file from ../data/input/amazon_All_Beauty/All_Beauty.jsonl

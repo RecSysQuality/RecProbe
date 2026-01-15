@@ -1,0 +1,60 @@
+2026-01-15 21:12:18,916 | INFO | Loading JSONL file in chunks from /Users/ornellairrera/PycharmProjects/DefectRecSys/NoiseInjector/data/input/amazon_All_Beauty/All_Beauty.jsonl
+2026-01-15 21:12:28,097 | INFO | Extracting 5-core from the dataset
+2026-01-15 21:12:28,770 | INFO | Finished extracting 5-core. Remaining records: 3315
+2026-01-15 21:12:28,770 | INFO | Loaded df with 3315 records
+2026-01-15 21:12:28,771 | INFO | Unique users: 357, Unique items: 479
+2026-01-15 21:12:28,776 | INFO | Rating stats:
+count    3315.000000
+mean        4.234087
+std         1.092901
+min         1.000000
+25%         4.000000
+50%         5.000000
+75%         5.000000
+max         5.000000
+Name: rating, dtype: float64
+2026-01-15 21:12:28,777 | INFO | Rating value counts:
+rating
+1     151
+2     141
+3     353
+4     806
+5    1864
+Name: count, dtype: int64
+2026-01-15 21:12:28,777 | INFO | Average items per user:
+9.29
+2026-01-15 21:12:28,777 | INFO | Average users per item:
+6.92
+2026-01-15 21:12:28,777 | INFO | Sparsity of the dataset: 
+0.980614
+2026-01-15 21:12:28,885 | INFO | Finished loading JSONL file from /Users/ornellairrera/PycharmProjects/DefectRecSys/NoiseInjector/data/input/amazon_All_Beauty/All_Beauty.jsonl
+2026-01-15 21:13:52,818 | INFO | Loaded df with 3365 records
+2026-01-15 21:13:52,822 | INFO | Unique users: 357, Unique items: 479
+2026-01-15 21:13:52,828 | INFO | Rating stats:
+count    3365.000000
+mean        4.238039
+std         1.088303
+min         1.000000
+25%         4.000000
+50%         5.000000
+75%         5.000000
+max         5.000000
+Name: rating, dtype: float64
+2026-01-15 21:13:52,830 | INFO | Rating value counts:
+rating
+1     151
+2     141
+3     358
+4     821
+5    1894
+Name: count, dtype: int64
+2026-01-15 21:13:52,831 | INFO | Average items per user:
+9.43
+2026-01-15 21:13:52,831 | INFO | Average users per item:
+7.03
+2026-01-15 21:13:52,831 | INFO | Sparsity of the dataset: 
+0.980322
+2026-01-15 21:13:52,831 | INFO | Saving noisy DataFrame to CSV at /Users/ornellairrera/PycharmProjects/DefectRecSys/NoiseInjector/data/output/amazon_All_Beauty/All_Beauty.csv
+2026-01-15 21:13:54,945 | INFO | Train set with 2692 rows
+2026-01-15 21:13:54,945 | INFO | Test set with 673 rows
+2026-01-15 21:13:54,957 | INFO | noisy df saved.

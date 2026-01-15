@@ -1,4 +1,4 @@
-context: realistic_noise  # add | remove | corrupt
+context: realistic_noise
 total_budget: 5000        # total number of reviews to add/remove/corrupt
 avoid_duplicates: true    # evita duplicati (stesso user-item pair) se true
 
@@ -14,7 +14,10 @@ remove_reviews:
   temporal_interval:
     start_timestamp: 1609459200      # start of temporal interval (inclusive) in UNIX timestamp format
     end_timestamp: 1640995200
-
+  rating_behavior:                  # rating of the added reviews
+    min_rating: 1
+    max_rating: 5
+    sampling_strategy: gaussian      # gaussian | uniform
 
 # context 2 -- review burst noise. Create item hubs by adding many reviews to few items
 review_burst_noise:
@@ -27,10 +30,7 @@ review_burst_noise:
   temporal_interval:
     start_timestamp: 1609459200     # start of interval (UNIX)
     end_timestamp: 1640995200       # end of interval (UNIX)
-  rating_behavior:                  # rating of the added reviews
-    min_rating: 1
-    max_rating: 5
-    sampling_strategy: gaussian      # gaussian | uniform
+
 
 # context 3 -- add sentence noise/shuffle text to reviews
 sentence_noise:
@@ -45,3 +45,7 @@ sentence_noise:
     start_timestamp: 1609459200      # start of temporal interval (inclusive) in UNIX timestamp format
     end_timestamp: 1640995200
   vocabulary_file: "config/files/vocabulary.json"  # required if noise_type is token_noise or sentence_noise
+  rating_behavior: # rating of the added reviews
+    min_rating: 1
+    max_rating: 5
+    sampling_strategy: gaussian      # gaussian | uniform

@@ -1,0 +1,57 @@
+2026-01-15 18:35:29,460 | INFO | Loading JSONL file in chunks from /Users/ornellairrera/PycharmProjects/DefectRecSys/NoiseInjector/data/input/amazon_All_Beauty/All_Beauty.jsonl
+2026-01-15 18:35:37,213 | INFO | Extracting 5-core from the dataset
+2026-01-15 18:35:37,891 | INFO | Finished extracting 5-core. Remaining records: 3315
+2026-01-15 18:35:37,891 | INFO | Loaded df with 3315 records
+2026-01-15 18:35:37,892 | INFO | Unique users: 357, Unique items: 479
+2026-01-15 18:35:37,894 | INFO | Rating stats:
+count    3315.000000
+mean        4.234087
+std         1.092901
+min         1.000000
+25%         4.000000
+50%         5.000000
+75%         5.000000
+max         5.000000
+Name: rating, dtype: float64
+2026-01-15 18:35:37,894 | INFO | Rating value counts:
+rating
+1     151
+2     141
+3     353
+4     806
+5    1864
+Name: count, dtype: int64
+2026-01-15 18:35:37,894 | INFO | Average items per user:
+9.29
+2026-01-15 18:35:37,894 | INFO | Average users per item:
+6.92
+2026-01-15 18:35:37,894 | INFO | Sparsity of the dataset: 
+0.980614
+2026-01-15 18:35:37,997 | INFO | Finished loading JSONL file from /Users/ornellairrera/PycharmProjects/DefectRecSys/NoiseInjector/data/input/amazon_All_Beauty/All_Beauty.jsonl
+2026-01-15 18:35:38,010 | INFO | Loaded df with 3365 records
+2026-01-15 18:35:38,011 | INFO | Unique users: 357, Unique items: 479
+2026-01-15 18:35:38,012 | INFO | Rating stats:
+count    3365.000000
+mean        4.228529
+std         1.096050
+min         1.000000
+25%         4.000000
+50%         5.000000
+75%         5.000000
+max         5.000000
+Name: rating, dtype: float64
+2026-01-15 18:35:38,012 | INFO | Rating value counts:
+rating
+1     155
+2     145
+3     359
+4     823
+5    1883
+Name: count, dtype: int64
+2026-01-15 18:35:38,012 | INFO | Average items per user:
+9.43
+2026-01-15 18:35:38,012 | INFO | Average users per item:
+7.03
+2026-01-15 18:35:38,012 | INFO | Sparsity of the dataset: 
+0.980322
+2026-01-15 18:35:38,012 | INFO | Saving noisy DataFrame to CSV at /Users/ornellairrera/PycharmProjects/DefectRecSys/NoiseInjector/data/output/amazon_All_Beauty/All_Beauty.csv

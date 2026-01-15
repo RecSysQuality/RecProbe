@@ -1,28 +1,28 @@
 input:
   reviews:
-    path: data/All_Beauty.jsonl
+    file_name: All_Beauty
     format: jsonl
     separator: ','
   items:
-    path: data/items.csv
+    file_name: meta_All_Beauty
     format: csv
     separator: ','
 
 output:
+  split: 0.8      # train/test split. this allows you not to include the modified edges in the test vali/set. If 0.0 it will be ignored
+  target: cornac
   reviews:
-    path: data/All_Beauty.jsonl
-    format: jsonl
-    # target: cornac | recbole
+    format: csv
+    separator: ','
   items:
-    path: data/meta_All_Beauty.jsonl
-    format: jsonl
-    # target: cornac | recbole
+    format: csv
+    separator: ','
 
 noise_profile: rating  # rating | review | combined
 kcore: 5
+dataset: amazon_All_Beauty
 random_seed: 42
 verbose: true
-dataset: 'amazon'              # amazon | yelp
 
 
 

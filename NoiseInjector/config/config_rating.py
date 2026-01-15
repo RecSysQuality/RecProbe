@@ -50,7 +50,7 @@ class TemporalBehaviorConfig:
 @dataclass
 class TemporalIntervalConfig:
     start_timestamp: int = 1609459200       #  uniform | forward | backward
-    stop_timestamp: int = 1640995200              # low | medium | high
+    end_timestamp: int = 1640995200              # low | medium | high
 # =========================
 # User Burst Noise
 # =========================
@@ -112,13 +112,13 @@ class TimestampCorruptionConfig:
 @dataclass
 class RatingConfig:
     context: str = "realistic_noise"   # realistic_noise | user_burst_noise | item_burst_noise | timestamp_corruption
-    total_budget: int = 5000
+    budget: int = 5000
     avoid_duplicates: bool = True
 
     realistic_noise: Optional[RealisticNoiseConfig] = None
     user_burst_noise: Optional[UserBurstNoiseConfig] = None
     item_burst_noise: Optional[ItemBurstNoiseConfig] = None
-    timestamp_corruption_config: Optional[TimestampCorruptionConfig] = None
+    timestamp_corruption: Optional[TimestampCorruptionConfig] = None
 
 # =========================
 # Loader YAML

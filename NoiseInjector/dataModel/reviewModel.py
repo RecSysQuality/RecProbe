@@ -15,31 +15,36 @@ class ReviewModel(BaseModel):
     dataset_mappings: ClassVar[Dict[str, Dict[str, Optional[str]]]] = {
         "amazon": {
             "user_id": "user_id",
-            "item_id": "parent_asin",
+            "parent_asin": "item_id",
             "rating": "rating",
-            "review_text": "text",
+            "text": "review_text",
             "title": "title",
             "timestamp": "timestamp"
         },
         "yelp": {
             "user_id": "user_id",
-            "item_id": "business_id",
-            "rating": "stars",
-            "review_text": "text",
-            "title": None,   # Yelp non ha titolo
-            "timestamp": "date"
+            "business_id": "item_id",
+            "stars": "rating",
+            "text": "review_text",
+            "date": "timestamp"
         }
         # add here custom mapping according to your datasets as defined in the config.yaml
     }
 
     @classmethod
     def from_dataframe(cls, df: pd.DataFrame, dataset: str) -> pd.DataFrame:
+        if 'amazon' in dataset:
+            dataset = 'amazon'
+        elif 'yelp' in dataset:
+            dataset = 'yelp'
         mapping = cls.dataset_mappings.get(dataset)
         if mapping is None:
             raise ValueError(f"No mapping found for dataset {dataset}")
 
         # Seleziona e rinomina le colonne
-        df = df[list(filter(None, mapping.values()))]  # ignora None
-        rename_map = {v: k for k, v in mapping.items() if v is not None}
+        df = df[list(filter(None, mapping.keys()))]  # ignora None
+        rename_map = {k: v for k, v in mapping.items()}
         df = df.rename(columns=rename_map)
+        if 'title' not in df:
+            df['title'] = ''
         return df

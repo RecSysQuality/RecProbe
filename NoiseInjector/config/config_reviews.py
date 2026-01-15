@@ -11,13 +11,6 @@ class RatingBehaviorConfig:
     max_rating: int = 5
     sampling_strategy: str = "gaussian"  # gaussian | uniform
 
-# =========================
-# Temporal behavior
-# =========================
-@dataclass
-class TemporalBehaviorConfig:
-    start_timestamp: int = 1609459200       #  uniform | forward | backward
-    end_timestamp: int = 1640995200             # low | medium | high
 
 # =========================
 # Temporal interval
@@ -37,7 +30,6 @@ class RemoveRevNoiseConfig:
     max_reviews_per_node: float = float("inf")
     min_reviews_per_node: float = 1
     min_length_of_review: float = 10
-    #rating_behavior: RatingBehaviorConfig = field(default_factory=RatingBehaviorConfig)
     temporal_interval: TemporalIntervalConfig = field(default_factory=TemporalIntervalConfig)
 
 # =========================
@@ -68,13 +60,13 @@ class SentecneNoiseConfig:
     min_length_of_review: int = 10
     noise_type: str = 'shuffle'
     vocabulary_file: str = None
-    temporal_behavior: TemporalBehaviorConfig = field(default_factory=TemporalBehaviorConfig)
+    temporal_interval: TemporalIntervalConfig = field(default_factory=TemporalIntervalConfig)
 
 # =========================
 # Main Rating Config
 # =========================
 @dataclass
-class RatingConfig:
+class ReviewConfig:
     context: str = "realistic_noise"   # realistic_noise | user_burst_noise | item_burst_noise | timestamp_corruption
     total_budget: int = 5000
     avoid_duplicates: bool = True
@@ -86,12 +78,12 @@ class RatingConfig:
 # =========================
 # Loader YAML
 # =========================
-def load_rating_config(path: str = "files/config_rating.yaml") -> RatingConfig:
+def load_review_config(path: str = "files/config_review.yaml") -> ReviewConfig:
     with open(path, "r") as f:
         cfg_dict = yaml.safe_load(f)
 
     return from_dict(
-        data_class=RatingConfig,
+        data_class=ReviewConfig,
         data=cfg_dict
     )
 
@@ -99,5 +91,5 @@ def load_rating_config(path: str = "files/config_rating.yaml") -> RatingConfig:
 # Test
 # =========================
 if __name__ == "__main__":
-    rating_cfg = load_rating_config("files/config_review.yaml")
+    rating_cfg = load_review_config("files/config_review.yaml")
     print(rating_cfg)

@@ -1,68 +1,95 @@
 import yaml
-import sys, os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+from dataclasses import dataclass
+from typing import Optional, Union
 
-from dataclasses import dataclass, field
-from typing import Optional, List, Union
 from .config_rating import RatingConfig, load_rating_config
+from .config_reviews import ReviewConfig, load_review_config
+from .config_combined import RatingReviewConfig, load_combined_config
+import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+# ------------------ DATACLASSES ------------------
 
 @dataclass
 class SingleFileConfig:
-    path: str
+    name: str
     format: str
-    separator: str = ","  # default per CSV
+    separator: str = ","
+
 
 @dataclass
 class InputConfig:
     reviews: Optional[SingleFileConfig] = None
-    items: Optional[SingleFileConfig] = None  # opzionale, se vuoi caricare items
+    items: Optional[SingleFileConfig] = None
+
 
 @dataclass
 class OutputConfig:
     reviews: Optional[SingleFileConfig] = None
     items: Optional[SingleFileConfig] = None
-    target: Optional[str] = None  # percorso di output opzionale
+    target: Optional[str] = None
+    split: Optional[float] = 0.8
 
 
 @dataclass
 class Config:
     input: InputConfig
     output: OutputConfig
-    noise_profile: str = 'rating' # choices rating, review, combined
+    noise_profile: str = "rating"
     kcore: Optional[int] = 5
     random_seed: int = 42
     verbose: bool = False
-    dataset: Optional[str] = None
-    noise_config: Optional[Union['RatingConfig']] = None
+    dataset: str = "amazon_All_Beauty"
+    noise_config: Optional[
+        Union[RatingConfig, ReviewConfig, RatingReviewConfig]
+    ] = None
 
 
-def load_config(path: str = "config_base.yaml",path_rating: str = "files/config_rating.yaml") -> Config:
+# ------------------ LOADER ------------------
+import os
+def load_config(
+    path: str = "files/config_base.yaml",
+    profile: str = "rating",
+) -> Config:
+
+
     with open(path) as f:
         cfg_dict = yaml.safe_load(f)
 
     input_cfg = InputConfig(**cfg_dict["input"])
     output_cfg = OutputConfig(**cfg_dict["output"])
+    if profile:
+        noise_profile = profile
+    else:
+        noise_profile = cfg_dict.get("noise_profile", profile)
 
-    if cfg_dict.get("noise_profile", 'rating') == 'rating':
-        noise_config = load_rating_config(path_rating)
-
-    elif cfg_dict.get("noise_profile") == 'review':
-        noise_config = None
-    elif cfg_dict.get("noise_profile") == 'combined':
-        noise_config = None
+    if noise_profile == "rating":
+        path_noise = f"{BASE_DIR}/files/config_rating.yaml"
+        noise_config = load_rating_config(path_noise)
+    elif noise_profile == "review":
+        path_noise = f"{BASE_DIR}/files/config_review.yaml"
+        noise_config = load_review_config(path_noise)
+    elif noise_profile == "combined":
+        path_noise = f"{BASE_DIR}/files/config_combined.yaml"
+        noise_config = load_combined_config(path_noise)
+    else:
+        raise ValueError(f"Unknown noise_profile: {noise_profile}")
 
     return Config(
         input=input_cfg,
         output=output_cfg,
-        noise_profile=cfg_dict.get("noise_profile", 'rating'),
+        noise_profile=noise_profile,
         random_seed=cfg_dict.get("random_seed", 42),
         kcore=cfg_dict.get("kcore", 5),
         verbose=cfg_dict.get("verbose", False),
         dataset=cfg_dict.get("dataset"),
-        noise_config=noise_config
+        noise_config=noise_config,
     )
 
 
+# ------------------ DEBUG ------------------
+
 if __name__ == "__main__":
-    config = load_config("files/config_base.yaml")
+    config = load_config()
     print(config)
