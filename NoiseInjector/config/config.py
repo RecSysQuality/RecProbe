@@ -36,6 +36,7 @@ class OutputConfig:
 class Config:
     input: InputConfig
     output: OutputConfig
+    drop_duplicates: bool = True
     noise_profile: str = "rating"
     kcore: Optional[int] = 5
     random_seed: int = 42
@@ -51,6 +52,7 @@ import os
 def load_config(
     path: str = "files/config_base.yaml",
     profile: str = "rating",
+    context: str = "realistic_noise"
 ) -> Config:
 
 
@@ -75,7 +77,8 @@ def load_config(
         noise_config = load_combined_config(path_noise)
     else:
         raise ValueError(f"Unknown noise_profile: {noise_profile}")
-
+    if context:
+        noise_config.context = context
     return Config(
         input=input_cfg,
         output=output_cfg,

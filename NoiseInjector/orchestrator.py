@@ -1,4 +1,6 @@
+from NoiseInjector.injectors.interactions.combined_injector import CombinedNoiseInjector
 from NoiseInjector.injectors.interactions.rating_injector import RatingNoiseInjector
+from NoiseInjector.injectors.interactions.review_injector import ReviewNoiseInjector
 #from NoiseInjector.injectors.interactions.review_injector import ReviewNoiseInjector
 #from NoiseInjector.injectors.interactions.combined_injector import CombinedNoiseInjector
 from logger import get_logger, logging
@@ -15,9 +17,9 @@ class NoiseOrchestrator:
         if np == 'rating':
             obj = RatingNoiseInjector(self.logger,self.config)
         elif np == 'review':
-            obj = RatingNoiseInjector(self.config,self.logger)
+            obj = ReviewNoiseInjector(self.config,self.logger)
         elif np == 'combined':
-            obj = RatingNoiseInjector(self.config,self.logger)
+            obj = CombinedNoiseInjector(self.config,self.logger)
         df,modified = obj.apply_noise(df)
 
-        return df
+        return df,modified

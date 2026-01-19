@@ -20,6 +20,7 @@ output:
 
 noise_profile: rating  # rating | review | combined
 kcore: 5
+drop_duplicates: true
 dataset: amazon_All_Beauty
 random_seed: 42
 verbose: true

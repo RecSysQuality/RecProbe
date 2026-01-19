@@ -19,7 +19,7 @@ class RatingBehaviorConfig:
 @dataclass
 class TemporalIntervalConfig:
     start_timestamp: int = 1609459200       #  uniform | forward | backward
-    stop_timestamp: int = 1640995200              # low | medium | high
+    end_timestamp: int = 1640995200              # low | medium | high
 
 
 # =========================
@@ -46,6 +46,7 @@ class RatingReviewNoiseConfig:
     max_reviews_per_node: float = 50
     min_reviews_per_node: float = 1
     min_length_of_review: int = 10
+    model: str = 'TinyLlama/TinyLlama-1.1B-Chat-v1.0'
     rating_behavior: RatingBehaviorConfig = field(default_factory=RatingBehaviorConfig)
     temporal_interval: TemporalIntervalConfig = field(default_factory=TemporalIntervalConfig)
 
@@ -57,6 +58,7 @@ class SemanticDriftNoiseConfig:
     max_reviews_per_node: float = 50
     min_reviews_per_node: float = 1
     min_length_of_review: int = 10
+    model: str = 'TinyLlama/TinyLlama-1.1B-Chat-v1.0'
     rating_behavior: RatingBehaviorConfig = field(default_factory=RatingBehaviorConfig)
     temporal_interval: TemporalIntervalConfig = field(default_factory=TemporalIntervalConfig)
 
@@ -67,7 +69,7 @@ class SemanticDriftNoiseConfig:
 @dataclass
 class RatingReviewConfig:
     context: str = "realistic_noise"   # realistic_noise | user_burst_noise | item_burst_noise | timestamp_corruption
-    total_budget: int = 5000
+    budget: int = 5000
     avoid_duplicates: bool = True
     semantic_drift: Optional[SemanticDriftNoiseConfig] = None
     rating_review_burst: Optional[RatingReviewNoiseConfig] = None

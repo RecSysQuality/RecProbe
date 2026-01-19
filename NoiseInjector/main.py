@@ -47,7 +47,7 @@ def main():
 
     parser.add_argument(
         "--noise_injection",
-        default='realistic_noise',
+        default='timestamp_corruption',
         help='Noise injection (called "context" in the config files)',
     )
 
@@ -91,7 +91,7 @@ def main():
 
     log_file=f"{BASE_DIR}/logs/noise_injector_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
     logger = get_logger(log_file=log_file, level=logging.INFO)
-    config = load_config(CONFIG_PATH, profile=profile)
+    config = load_config(CONFIG_PATH, profile=profile, context=noise_injection)
     set_seed(config.random_seed)
 
     loader = DatasetLoader(logger=logger,config=config)
@@ -109,12 +109,12 @@ def main():
 
     # 3. Create orchestrator e applica rumore
     orchestrator = NoiseOrchestrator(logger,config)
-    df_noisy = orchestrator.apply(df)
+    df_noisy,modified = orchestrator.apply(df)
 
     # 4. Salva output
-    loader.save_csv(df_noisy)
+    loader.save_csv(df_noisy,modified)
     logger.info(f"noisy df saved.")
-
+    exit(0)
 
 if __name__ == "__main__":
     main()

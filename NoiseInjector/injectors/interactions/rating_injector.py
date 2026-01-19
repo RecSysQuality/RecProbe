@@ -4,7 +4,7 @@ import pandas as pd
 import random
 from NoiseInjector.injectors.base import BaseNoiseInjector
 
-
+from NoiseInjector.utils import *
 class RatingNoiseInjector(BaseNoiseInjector):
 
     def __init__(self, logger,config):
@@ -31,29 +31,6 @@ class RatingNoiseInjector(BaseNoiseInjector):
         raise ValueError(f"Unknown rating noise context: {ctx}")
 
     # ==========================================================
-    # COMMON HELPERS
-    # ==========================================================
-    def _ordered_nodes(self, df, target, strategy):
-        nodes = df[target].value_counts(ascending=strategy == 'least').index.tolist()
-        if strategy == 'uniform':
-            random.shuffle(nodes)
-        return nodes
-
-    def _sample_ratings(self, base_ratings, n, config):
-        if config.rating_behavior.sampling_strategy == 'gaussian':
-            mu, sigma = base_ratings.mean(), base_ratings.std() or 1.0
-            r = np.random.normal(mu, sigma, size=n)
-            return np.clip(np.rint(r), config.rating_behavior.min_rating, config.rating_behavior.max_rating).astype(int)
-        return np.random.randint(config.rating_behavior.min_rating, config.rating_behavior.max_rating + 1, size=n)
-
-    def _per_node_budget(self, node_size, total_left,min_ratings_per_node,max_ratings_per_node):
-        n = np.random.randint(
-            min_ratings_per_node,
-            max_ratings_per_node+1
-        )
-        return min(n, node_size, total_left)
-
-    # ==========================================================
     # REALISTIC NOISE
     # ==========================================================
     def _realistic_noise(self, df):
@@ -62,7 +39,7 @@ class RatingNoiseInjector(BaseNoiseInjector):
         target = 'user_id' if config.realistic_noise.target == 'user' else 'item_id'
         other = 'item_id' if target == 'user_id' else 'user_id'
 
-        nodes = self._ordered_nodes(df, target, noise_config.selection_strategy)
+        nodes = ordered_nodes(df, target, noise_config.selection_strategy)
 
         if config.realistic_noise.operation == 'remove':
             return self._remove_ratings(df, nodes, target,other, config,noise_config)
@@ -80,35 +57,35 @@ class RatingNoiseInjector(BaseNoiseInjector):
         remaining = self.budget
         degrees = df.groupby(target)[other].nunique()
         max_degree = degrees.max()
+        start_ts = noise_config.temporal_interval.start_timestamp
+        end_ts = noise_config.temporal_interval.end_timestamp
+        start_ts = parse_timestamp(start_ts)
+        end_ts = parse_timestamp(end_ts)
 
+        grouped = df.groupby(target)
         for node in nodes:
-            if remaining <= 0:
-                break
+            if remaining <= 0 or node not in grouped.groups:
+                continue
 
-            node_df = df[df[target] == node]
-            n = self._per_node_budget(len(node_df), remaining, noise_config.min_ratings_per_node,noise_config.max_ratings_per_node)
-            c = 0
-            while n <= 0 or n == len(node_df):
-                n = self._per_node_budget(len(node_df), remaining, noise_config.min_ratings_per_node,
-                                          noise_config.max_ratings_per_node)
-                c+=1
-                if c == 20: # too many iterations, change node
-                    continue
+            #node_df = df[df[target] == node]
+            # n = per_node_budget(len(node_df), remaining, noise_config.min_ratings_per_node,noise_config.max_ratings_per_node)
+            # if n <= 0:
+            #     continue
+            node_df = grouped.get_group(node)
+            n = per_node_budget(len(node_df), remaining,
+                                noise_config.min_ratings_per_node,
+                                noise_config.max_ratings_per_node)
+            if n <= 0:
+                continue
+
             if noise_config.preserve_degree_distribution:
                 factor = (max_degree - degrees.get(node, 0)) / max_degree
                 n = max(1, int(np.ceil(n * factor)))
 
 
-            start_ts = noise_config.temporal_interval.start_timestamp
-            start_ts = pd.to_datetime(start_ts, unit='s')
 
-            end_ts = noise_config.temporal_interval.end_timestamp
-            end_ts = pd.to_datetime(end_ts, unit='s')
-
-            ratings = self._sample_ratings(node_df['rating'], n, noise_config)
-            candidates = node_df[
-                node_df['rating'].isin(ratings)
-                ]
+            ratings = sample_ratings(node_df['rating'], n, noise_config)
+            candidates = node_df[node_df['rating'].isin(ratings)]
 
             if start_ts != 0 and end_ts != 0:
 
@@ -134,43 +111,48 @@ class RatingNoiseInjector(BaseNoiseInjector):
         rows = []
         remaining = self.budget
         all_other = df[other].unique()
-
         degrees = df.groupby(target)[other].nunique()
         max_degree = degrees.max()
+        grouped = df.groupby(target)
+        start_ts = noise_config.temporal_interval.start_timestamp
+        end_ts = noise_config.temporal_interval.end_timestamp
+        start_ts = parse_timestamp(start_ts)
+        end_ts = parse_timestamp(end_ts)
 
         for node in nodes:
             if remaining <= 0:
                 break
 
-            node_df = df[df[target] == node]
-            used = node_df[other].unique()
-            available = all_other
-            if config.avoid_duplicates:
-                available = np.setdiff1d(all_other, used)
-
+            node_df = grouped.get_group(node) if node in grouped.groups else pd.DataFrame(columns=df.columns)
+            used = node_df[other].unique() if not node_df.empty else np.array([])
+            available = np.setdiff1d(all_other, used) if getattr(noise_config, 'avoid_duplicates', False) else all_other
             if len(available) == 0:
                 continue
 
-            n = self._per_node_budget(len(node_df), remaining, noise_config.min_ratings_per_node,noise_config.max_ratings_per_node)
+            # node_df = df[df[target] == node]
+            # used = node_df[other].unique()
+            # available = all_other
+            # if config.avoid_duplicates:
+            #     available = np.setdiff1d(all_other, used)
+            #
+            # if len(available) == 0:
+            #     continue
+
+            n = per_node_budget(len(node_df), remaining, noise_config.min_ratings_per_node,noise_config.max_ratings_per_node)
+            if n <= 0:
+                continue
 
             if getattr(noise_config, 'preserve_degree_distribution', None):
                 factor = (max_degree - degrees.get(node, 0)) / max_degree
                 n = max(1, int(np.ceil(n * factor)))
 
             sampled_other = np.random.choice(available, size=n, replace=False)
-            sampled_ratings = self._sample_ratings(node_df['rating'], n, noise_config)
-
-            start_ts = noise_config.temporal_interval.start_timestamp
-            end_ts = noise_config.temporal_interval.end_timestamp
-
+            sampled_ratings = sample_ratings(node_df['rating'], n, noise_config)
 
             if start_ts == 0 and end_ts == 0:
-                now_ts = int(pd.Timestamp.now().timestamp())  # ora corrente in secondi
-                timestamps = np.random.randint(now_ts - 365 * 24 * 3600, now_ts + 1, size=n)
+                timestamps = [int(pd.Timestamp.now().timestamp()) for _ in range(n)]
             else:
-                timestamps = np.random.randint(start_ts, end_ts + 1, size=n)
-
-            timestamps = pd.to_datetime(timestamps, unit='s')  # se i timestamp sono in millisecondi
+                timestamps = [int((start_ts + (end_ts - start_ts) * random.random()).timestamp()) for _ in range(n)]
 
             rows.append(pd.DataFrame({
                 target: node,
@@ -196,38 +178,41 @@ class RatingNoiseInjector(BaseNoiseInjector):
             noise_config = self.config.user_burst_noise
 
         other = 'item_id' if target == 'user_id' else 'user_id'
-        nodes = self._ordered_nodes(df, target, noise_config.selection_strategy)
+        nodes = ordered_nodes(df, target, noise_config.selection_strategy)
         return self._add_ratings(df, nodes, target, other, config,noise_config)
 
     # ==========================================================
     # TIMESTAMP CORRUPTION
     # ==========================================================
     def _timestamp_corruption(self, df):
-        config = self.config
         noise_config = self.config.timestamp_corruption
-        nodes = self._ordered_nodes(
-            df,
-            'user_id' if noise_config.target == 'user' else 'item_id',
-            noise_config.selection_strategy
-        )
+        target_col = 'user_id' if noise_config.target == 'user' else 'item_id'
+        nodes = ordered_nodes(df, target_col, noise_config.selection_strategy)
 
         remaining = self.budget
+        grouped = df.groupby(target_col)
         df['noise'] = False
         for node in nodes:
-            if remaining <= 0:
-                break
+            if remaining <= 0 or node not in grouped.groups:
+                continue
 
-            node_df = df[df['user_id'] == node]
-            n = self._per_node_budget(len(node_df), remaining, noise_config.min_ratings_per_node,noise_config.max_ratings_per_node)
+            node_df = grouped.get_group(node)
+            n = per_node_budget(len(node_df), remaining,
+                                noise_config.min_ratings_per_node,
+                                noise_config.max_ratings_per_node)
+            if n <= 0:
+                continue
+
             sampled = node_df.sample(n=n, replace=False)
 
-            df.loc[sampled.index, 'timestamp'] = self._corrupt(sampled,noise_config,config)
+            df.loc[sampled.index, 'timestamp'] = self._corrupt(sampled,noise_config)
             df.loc[sampled.index, 'noise'] = True
             remaining -= n
 
         return df, None
 
-    def _corrupt(self, df,noise_config,config):
+    @staticmethod
+    def _corrupt(df,noise_config):
         tb = noise_config.temporal_behavior
         days_map = {"low": 7, "medium": 30, "high": 365}
         max_days = np.random.randint(1, 10) * days_map.get(tb.intensity, 30)

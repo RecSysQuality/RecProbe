@@ -12,6 +12,16 @@ class RatingBehaviorConfig:
     sampling_strategy: str = "gaussian"  # gaussian | uniform
 
 
+@dataclass
+class NearDuplicatesConfig:
+    model: str = 'ramsrigouthamg/t5_paraphraser'
+    rating: float = 4
+    review: str = ''
+    title: str = ''
+
+
+
+
 # =========================
 # Temporal interval
 # =========================
@@ -19,18 +29,18 @@ class RatingBehaviorConfig:
 @dataclass
 class TemporalIntervalConfig:
     start_timestamp: int = 1609459200       #  uniform | forward | backward
-    stop_timestamp: int = 1640995200              # low | medium | high
+    end_timestamp: int = 1640995200              # low | medium | high
 
 @dataclass
 class RemoveRevNoiseConfig:
     target: str = "user"                # user | item | NA
     selection_strategy: str = "uniform" # uniform | popularity_based
     operation: str = "remove"           # remove | add
-    preserve_degree_distribution: bool = True
     max_reviews_per_node: float = float("inf")
     min_reviews_per_node: float = 1
     min_length_of_review: float = 10
     temporal_interval: TemporalIntervalConfig = field(default_factory=TemporalIntervalConfig)
+    rating_behavior: RatingBehaviorConfig = field(default_factory=RatingBehaviorConfig)
 
 # =========================
 # Item Burst Noise
@@ -40,11 +50,12 @@ class ReviewBurstNoiseConfig:
     target: str = "item"                # user | item | NA
     selection_strategy: str = "uniform" # uniform | popularity_based
     operation: str = "add"           # remove | add
+    model: str = "t5-base"
     max_reviews_per_node: float = float("inf")
     min_reviews_per_node: float = 1
     min_length_of_review: int = 10
-    rating_behavior: RatingBehaviorConfig = field(default_factory=RatingBehaviorConfig)
     temporal_interval: TemporalIntervalConfig = field(default_factory=TemporalIntervalConfig)
+    near_duplicates_configuration: NearDuplicatesConfig = field(default_factory=NearDuplicatesConfig)
 
 # =========================
 # Timestamp corruption config
@@ -53,14 +64,17 @@ class ReviewBurstNoiseConfig:
 class SentecneNoiseConfig:
     target: str = "item"                # user | item | NA
     operation: str = "corrupt"                # user | item | NA
+    model: str = "t5-base"
     selection_strategy: str = "uniform" # uniform | popularity_based
           # remove | add
     max_reviews_per_node: float = "inf"
     min_reviews_per_node: float = 1
     min_length_of_review: int = 10
     noise_type: str = 'shuffle'
-    vocabulary_file: str = None
+    intensity: str = 'low'
+   # vocabulary_file: str = None
     temporal_interval: TemporalIntervalConfig = field(default_factory=TemporalIntervalConfig)
+    rating_behavior: RatingBehaviorConfig = field(default_factory=RatingBehaviorConfig)
 
 # =========================
 # Main Rating Config
@@ -68,7 +82,7 @@ class SentecneNoiseConfig:
 @dataclass
 class ReviewConfig:
     context: str = "realistic_noise"   # realistic_noise | user_burst_noise | item_burst_noise | timestamp_corruption
-    total_budget: int = 5000
+    budget: int = 5000
     avoid_duplicates: bool = True
 
     remove_reviews: Optional[RemoveRevNoiseConfig] = None

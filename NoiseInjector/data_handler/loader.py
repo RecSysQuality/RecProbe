@@ -26,16 +26,22 @@ class DatasetLoader:
         # Inizializza logger
         self.logger = logger
 
-    def save_csv(self, df: pd.DataFrame):
+    def save_csv(self, df: pd.DataFrame, modified: pd.DataFrame):
         """Salva un DataFrame in CSV"""
         separator = self.config.output.reviews['separator']
         self._log_stats(df)
+
+        if self.config.drop_duplicates:
+            df.drop_duplicates(inplace=True)
+
         # todo manage the items part
         if not os.path.exists(f"{BASE_DIR}/data/output/{self.config.dataset}/"):
             # crea la cartella
             os.makedirs(f"{BASE_DIR}/data/output/{self.config.dataset}/",exist_ok=True)
         path = f"{BASE_DIR}/data/output/{self.config.dataset}/{self.config.input.reviews['file_name']}.csv"
+        path_mod = f"{BASE_DIR}/data/output/{self.config.dataset}/modified.csv"
         self.logger.info(f"Saving noisy DataFrame to CSV at {path}")
+        modified.to_csv(path_mod, index=False, sep=separator)
         if self.config.output.split == 0.0:
             if 'noise' in df.columns:
                 df = df.drop(columns=['noise'])
@@ -91,6 +97,9 @@ class DatasetLoader:
 
     def extract_kcore(self, df: pd.DataFrame) -> pd.DataFrame:
         """Estrae il k-core dal dataframe"""
+
+        if self.config.drop_duplicates:
+            df.drop_duplicates(inplace=True)
         k = self.config.kcore
         if k > 1:
             self.logger.info(f"Extracting {k}-core from the dataset")
