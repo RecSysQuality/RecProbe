@@ -1,0 +1,34 @@
+input:
+  reviews:
+    file_name: All_Beauty
+    format: jsonl
+    separator: ','
+  items:
+    file_name: meta_All_Beauty
+    format: csv
+    separator: ','
+
+output:
+  target: cornac
+  reviews:
+    format: csv
+    separator: ','
+  items:
+    format: csv
+    separator: ','
+
+noise_profile: rating  # rating | review | combined
+kcore: 3
+split: 0.8 # if 1.0: no split -- i.e., no data for test, the entire dataset is polluted
+drop_duplicates: true
+dataset: amazon_All_Beauty
+random_seed: 42
+verbose: true
+
+
+
+
+
+
+
+
