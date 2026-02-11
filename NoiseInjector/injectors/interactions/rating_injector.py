@@ -138,7 +138,8 @@ class RatingNoiseInjector(BaseNoiseInjector):
             # if len(available) == 0:
             #     continue
 
-            n = per_node_budget(len(node_df), remaining, noise_config.min_ratings_per_node,noise_config.max_ratings_per_node)
+            #n = per_node_budget(len(node_df), remaining, noise_config.min_ratings_per_node,noise_config.max_ratings_per_node)
+            n = np.random.randint(noise_config.min_ratings_per_node,noise_config.max_ratings_per_node + 1)
             if n <= 0:
                 continue
 

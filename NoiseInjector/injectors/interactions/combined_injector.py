@@ -70,10 +70,9 @@ class CombinedNoiseInjector(BaseNoiseInjector):
         remaining = self.budget
 
         df['noise'] = False
-        start_ts = noise_config.temporal_interval.start_timestamp
-        end_ts = noise_config.temporal_interval.end_timestamp
-        start_ts = parse_timestamp(start_ts)
-        end_ts = parse_timestamp(end_ts)
+        start_ts = parse_timestamp(noise_config.temporal_interval.start_timestamp)
+        end_ts = parse_timestamp(noise_config.temporal_interval.end_timestamp)
+
 
         review_to_convert, title_to_convert = [], []
         for node in nodes:
@@ -91,12 +90,12 @@ class CombinedNoiseInjector(BaseNoiseInjector):
                 node_df['rating'].isin(ratings)
             ]
 
-            if start_ts != 0 and end_ts != 0:
-                candidates = node_df[
-                    node_df['rating'].isin(ratings) &  # rating desiderati
-                    (node_df['timestamp'] >= start_ts) &  # timestamp >= start
-                    (node_df['timestamp'] <= end_ts)  # timestamp <= end
-                    ]
+            # if start_ts != 0 and end_ts != 0:
+            #     candidates = node_df[
+            #         node_df['rating'].isin(ratings) &  # rating desiderati
+            #         (node_df['timestamp'] >= start_ts) &  # timestamp >= start
+            #         (node_df['timestamp'] <= end_ts)  # timestamp <= end
+            #         ]
 
             if candidates.empty:
                 continue
@@ -154,21 +153,19 @@ class CombinedNoiseInjector(BaseNoiseInjector):
                 node_df['rating'].isin(ratings)
             ]
 
-            if start_ts != 0 and end_ts != 0:
-                candidates = node_df[
-                    node_df['rating'].isin(ratings) &  # rating desiderati
-                    (node_df['timestamp'] >= start_ts) &  # timestamp >= start
-                    (node_df['timestamp'] <= end_ts)  # timestamp <= end
-                    ]
+            # if start_ts != 0 and end_ts != 0:
+            #     candidates = node_df[
+            #         node_df['rating'].isin(ratings) &  # rating desiderati
+            #         (node_df['timestamp'] >= start_ts) &  # timestamp >= start
+            #         (node_df['timestamp'] <= end_ts)  # timestamp <= end
+            #         ]
 
             if candidates.empty:
                 continue
 
             sampled = candidates.sample(n=min(len(candidates), n), replace=False)
             mod_idx.extend(sampled.index)
-
             remaining -= len(sampled)
-
 
             # Prepariamo batch di testi da trasformare
             review_texts = []
@@ -196,7 +193,7 @@ class CombinedNoiseInjector(BaseNoiseInjector):
 
             # Trasformiamo in batch
             new_review_texts = self._invert_sentiment(sentiment_inverter,review_texts)
-            new_titles = self._invert_sentiment(sentiment_inverter,titles)
+            new_titles = self._invert_sentiment(sentiment_inverter, titles)
 
             # Scriviamo in blocco nel DataFrame
             for idx, new_r, new_t in zip(sampled.index, new_review_texts, new_titles):
@@ -273,7 +270,8 @@ class CombinedNoiseInjector(BaseNoiseInjector):
         return df, mod
 
 
-    def _change_context(self, generator,text_list,mid):
+    @staticmethod
+    def _change_context(generator,text_list,mid):
 
 
         prompts = [f"Rewrite the sentence by:\n- keeping the same product\n- keeping the same sentiment\n- changing the context completely\n- avoiding references to the original context\n-- return only the revised text without any explanation\nSentence: {s} \nReturned sentence: "
@@ -288,10 +286,10 @@ class CombinedNoiseInjector(BaseNoiseInjector):
         )
         outputs = [out["generated_text"].split('Returned sentence: \n')[-1].split('\n')[0].replace('"', '') for out in outp]
 
-
         return outputs[0:mid],outputs[mid:]
 
-    def _invert_sentiment(self,generator,text_list,batch_size = 32):
+    @staticmethod
+    def _invert_sentiment(generator,text_list,batch_size = 32):
         # Funzione di batch processing
             outputs = []
             filtered_texts = [t for t in text_list if t is not None]
@@ -304,6 +302,7 @@ class CombinedNoiseInjector(BaseNoiseInjector):
                 do_sample=True,
                 temperature=0.8
             )
+
             #outputs.extend([r['generated_text'] for r in res])
             outputs.extend([out["generated_text"].split('Returned sentence: \n')[-1].split('\n')[0].replace('"', '') for out in res])
 

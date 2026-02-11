@@ -1,0 +1,4 @@
+model	NDCG@10	Recall@10	Train (s)	Test (s)	coverage	novelty
+BPR	0.0122	0.0229	0.2144	0.4196	0.0136	0.4289
+MostPop	0.0121	0.0219	0.0008	0.3601	0.0115	0.4288
+LightGCN	0.0646	0.0958	22.53	0.3815	0.8975	0.5985

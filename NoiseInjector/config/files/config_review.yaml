@@ -1,5 +1,5 @@
 context: review_burst_noise
-budget: 10        # total number of reviews to add/remove/corrupt
+budget: 10000        # total number of reviews to add/remove/corrupt
 avoid_duplicates: true    # evita duplicati (stesso user-item pair) se true
 
 # context 1 -- remove reviews. This does not remove the rating instead, it replaces the review text with an empty string
@@ -21,19 +21,19 @@ remove_reviews:
 # context 2 -- review burst noise. Create item hubs by adding many reviews to few items
 review_burst_noise:
   operation: add
-  target: item                       # item | user
+  target: user                       # item | user
   selection_strategy: top        # uniform | top | least
-  max_reviews_per_node: 50           # max number of reviews removed per node
-  min_reviews_per_node: 1            # min number of reviews removed per node
-  min_length_of_review: 10            # min number of tokens single space separated
+  max_reviews_per_node: 300           # max number of reviews removed per node
+  min_reviews_per_node: 100            # min number of reviews removed per node
+  min_length_of_review: 20            # min number of tokens single space separated
   temporal_interval:
     start_timestamp: 1609459200     # start of interval (UNIX)
     end_timestamp: 1640995200       # end of interval (UNIX)
   near_duplicates_configuration:
       model: ramsrigouthamg/t5_paraphraser
-      review: Wow! I love this product! Never had something like this        # this is the text of the review taken into account to create near duplicates, if not set, it will be selected randomly. IF set, the efficiency is higher
-      title: This is the best product I have tried so far
-      rating: 4 # the rating of the reviews to create the near duplicates of
+      review: This product is absolutely one of my favourites! It lasts all day and the quality remains great from morning to night, which is something I really value when I use a product like this. I have used it many times over a long period of time, and every time the experience has been very good, very reliable, and very satisfying. The performance is excellent, the quality is excellent, and overall it feels like a great choice for everyday use, even after many hours, even after repeated use, and even when expectations are high. I would definitely recommend it because the product works well, works consistently, and works exactly as expected.
+      title: The product you cannot live without 
+      rating: 1 # the rating of the reviews to create the near duplicates of
 
 
 # context 3 -- add sentence noise/shuffle text to reviews

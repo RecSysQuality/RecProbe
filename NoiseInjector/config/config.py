@@ -38,6 +38,7 @@ class Config:
     output: OutputConfig
     drop_duplicates: bool = True
     noise_profile: str = "rating"
+    noise_context: str = "realistic_noise"
     kcore: Optional[int] = 5
     random_seed: int = 42
     verbose: bool = False
@@ -79,10 +80,12 @@ def load_config(
         raise ValueError(f"Unknown noise_profile: {noise_profile}")
     if context:
         noise_config.context = context
+
     return Config(
         input=input_cfg,
         output=output_cfg,
         noise_profile=noise_profile,
+        noise_context=context,
         random_seed=cfg_dict.get("random_seed", 42),
         kcore=cfg_dict.get("kcore", 5),
         verbose=cfg_dict.get("verbose", False),

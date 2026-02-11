@@ -147,8 +147,12 @@ class ReviewNoiseInjector(BaseNoiseInjector):
         rows = []
         remaining = self.budget
         all_other = df[other].unique()
-        model = T5ForConditionalGeneration.from_pretrained(noise_config.near_duplicates_configuration.model).to(
-            self.device)
+        model = T5ForConditionalGeneration.from_pretrained(
+            noise_config.near_duplicates_configuration.model,
+            use_safetensors=True
+        ).to(self.device)
+        # model = T5ForConditionalGeneration.from_pretrained(noise_config.near_duplicates_configuration.model).to(
+        #     self.device)
         tokenizer = T5Tokenizer.from_pretrained(noise_config.near_duplicates_configuration.model)
 
         seed_review, seed_title, seed_rating = '','',4
@@ -157,10 +161,10 @@ class ReviewNoiseInjector(BaseNoiseInjector):
         seed_title = noise_config.near_duplicates_configuration.title
         seed_rating = noise_config.near_duplicates_configuration.rating
 
-        if noise_config.near_duplicates_configuration.review != '':
-            new_reviews = self._paraphrase(model, tokenizer, text_list=[seed_review], num_seq=noise_config.max_reviews_per_node)
-        if noise_config.near_duplicates_configuration.title != '':
-            new_titles = self._paraphrase(model, tokenizer, text_list=[seed_title], num_seq=noise_config.max_reviews_per_node)
+        if noise_config.near_duplicates_configuration.review is not None:
+            new_reviews = self._paraphrase(model, tokenizer, text_list=[seed_review], num_seq=noise_config.max_reviews_per_node*2)
+        if noise_config.near_duplicates_configuration.title is not None:
+            new_titles = self._paraphrase(model, tokenizer, text_list=[seed_title], num_seq=noise_config.max_reviews_per_node*2)
 
         df_grouped = df.groupby(target)
 
@@ -170,7 +174,9 @@ class ReviewNoiseInjector(BaseNoiseInjector):
         for node in nodes:
             if remaining <= 0:
                 break
-
+            seed_review = noise_config.near_duplicates_configuration.review
+            seed_title = noise_config.near_duplicates_configuration.title
+            seed_rating = noise_config.near_duplicates_configuration.rating
             if node not in df_grouped.groups:
                 continue
 
@@ -184,8 +190,12 @@ class ReviewNoiseInjector(BaseNoiseInjector):
                 continue
 
             # Numero di review da aggiungere
-            n = per_node_budget(len(node_df), remaining, noise_config.min_reviews_per_node,
-                                noise_config.max_reviews_per_node)
+            # n = per_node_budget(len(node_df), remaining, noise_config.min_reviews_per_node,
+            #                     noise_config.max_reviews_per_node)
+
+            n = np.random.randint(noise_config.min_reviews_per_node,noise_config.max_reviews_per_node+1)
+            n = min(n,remaining)
+
             if n <= 0:
                 continue
 
@@ -195,15 +205,13 @@ class ReviewNoiseInjector(BaseNoiseInjector):
             # SEED: scegli la review con rating mediano
 
             if not seed_review and not seed_title:
-                median_rating = node_df['rating'].median()
-                seed_rating = median_rating
+                seed_rating = noise_config.near_duplicates_configuration.rating
 
                 median_review_candidates = node_df[
-                    (node_df['rating'] == median_rating) &
-                    (node_df['review_text'].str.len() <= noise_config.min_length_of_review * 2)
+                    (node_df['rating'] == seed_rating)
                     ]['review_text'].tolist()
 
-                median_title_candidates = node_df[node_df['rating'] == median_rating]['title'].tolist()
+                median_title_candidates = node_df[node_df['rating'] == seed_rating]['title'].tolist()
 
                 if median_review_candidates:
                     sel = random.choice(median_review_candidates)
@@ -211,9 +219,7 @@ class ReviewNoiseInjector(BaseNoiseInjector):
                     idx = median_review_candidates.index(sel)
                     seed_title = median_title_candidates[idx] if median_title_candidates else ''
                 else:
-                    seed_review = node_df['review_text'].iloc[0]
-                    seed_title = node_df['title'].iloc[0] if 'title' in node_df else ''
-
+                    continue
                 new_reviews = self._paraphrase(model, tokenizer, [seed_review], num_seq=n)
                 new_titles = self._paraphrase(model, tokenizer, [seed_title], num_seq=n) if seed_title else [''] * n
 
@@ -231,7 +237,19 @@ class ReviewNoiseInjector(BaseNoiseInjector):
 
             np.random.shuffle(new_reviews)
             np.random.shuffle(new_titles)
-
+            # print(node)
+            # print(n)
+            # print(seed_review)
+            # for p in new_reviews:
+            #     print(p)
+            # print(len(new_reviews))
+            # print(len(new_reviews[0:n]))
+            # print(len(new_titles[0:n]))
+            # print(len(sampled_other))
+            # print(len(timestamps))
+            # print('\n\n')
+            sampled_other = sampled_other[0:min(n,len(new_reviews))]
+            timestamps = timestamps[0:min(n,len(new_reviews))]
             rows.append(pd.DataFrame({
                 target: node,
                 other: sampled_other,
@@ -247,117 +265,7 @@ class ReviewNoiseInjector(BaseNoiseInjector):
         return pd.concat([df, added], ignore_index=True), added
 
 
-    def _add_reviews_old(self, df, nodes, target, other, config, noise_config):
 
-        rows = []
-        remaining = self.budget
-        all_other = df[other].unique()
-        model = T5ForConditionalGeneration.from_pretrained(noise_config.near_duplicates_configuration.model).to(
-            self.device)
-        tokenizer = T5Tokenizer.from_pretrained(noise_config.near_duplicates_configuration.model)
-
-        seed_review, seed_title, seed_rating = '','',4
-        if noise_config.near_duplicates_configuration.review != '':
-            seed_review = noise_config.near_duplicates_configuration.review
-            seed_title = noise_config.near_duplicates_configuration.title
-            seed_rating = noise_config.near_duplicates_configuration.rating
-
-        for node in nodes:
-            if remaining <= 0:
-                break
-
-            node_df = df[df[target] == node]
-            used = node_df[other].unique()
-            available = all_other
-            if getattr(config, "avoid_duplicates", False):
-                available = np.setdiff1d(all_other, used)
-
-            if len(available) == 0:
-                continue
-
-            # determina numero di review da aggiungere
-            n = per_node_budget(len(node_df), remaining, noise_config.min_reviews_per_node,
-                                      noise_config.max_reviews_per_node)
-            if n <= 0:
-                continue
-
-            # selezione degli altri (user o item)
-            sampled_other = np.random.choice(available, size=n, replace=False)
-
-            # SEED: scegli la review con rating mediano
-
-            if seed_review == '':
-                median_rating = node_df['rating'].median()
-                seed_rating = median_rating
-                # median_review_candidates = node_df[node_df['rating'] == median_rating]['review_text'].tolist()
-                median_review_candidates = node_df[
-                    (node_df['rating'] == median_rating) &
-                    (node_df['review_text'].str.len() <= noise_config.min_length_of_review * 2)
-                    ]['review_text'].tolist()
-                median_title_candidates = node_df[node_df['rating'] == median_rating]['title'].tolist()
-
-                if len(median_review_candidates) == 0:
-                    seed_review = node_df['review_text'].sample(1).iloc[0]
-                    seed_title = node_df['title'].iloc[0] if 'title' in df.columns else ""
-                else:
-                    selected = random.sample(median_review_candidates, 1)[0]
-                    seed_review = selected
-                    ind = median_review_candidates.index(selected)
-                    seed_title = median_title_candidates[ind]
-
-            # if noise_config.near_duplicates_configuration.review != '':
-            #     seed_review = noise_config.near_duplicates_configuration.review
-            #     seed_title = noise_config.near_duplicates_configuration.title
-            #     median_rating = noise_config.near_duplicates_configuration.rating
-
-
-            new_reviews = self._paraphrase(model,tokenizer,text_list=[seed_review],num_seq=n)
-            #new_reviews.append(dup_review)
-
-            # Title (solo se esiste)
-            if seed_title:
-                new_titles = self._paraphrase(model,tokenizer, text_list=[seed_title], num_seq=n)
-            else:
-                new_titles = ['' for _ in range(n)]
-            start_ts = noise_config.temporal_interval.start_timestamp
-
-            end_ts = noise_config.temporal_interval.end_timestamp
-            start_ts = parse_timestamp(start_ts)
-            end_ts = parse_timestamp(end_ts)
-
-
-            # genera timestamps
-
-            if start_ts == 0 and end_ts == 0:
-
-                timestamps = [
-                    int(pd.Timestamp.now().timestamp())
-                    for _ in range(n)
-                ]
-
-            else:
-                #timestamps = np.random.randint(start_ts, end_ts + 1, size=n)
-                #random_dt = start_ts + (end_ts - start_ts) * random.random()
-                timestamps = [
-                    int((start_ts + (end_ts - start_ts) * random.random()).timestamp())
-                    for _ in range(n)
-                ]
-
-            # aggiungi al dataframe
-            rows.append(pd.DataFrame({
-                target: node,
-                other: sampled_other,
-                'rating': seed_rating,
-                'timestamp': timestamps,
-                'review': new_reviews,
-                'title': new_titles,
-                'noise': True
-            }))
-
-            remaining -= n
-        df['noise'] = False
-        added = pd.concat(rows, ignore_index=True) if rows else pd.DataFrame(columns=df.columns)
-        return pd.concat([df, added], ignore_index=True), added
 
     def _add_sentence_noise(self, df, nodes, target, other, config, noise_config):
         df['noise'] = False
@@ -540,7 +448,7 @@ class ReviewNoiseInjector(BaseNoiseInjector):
         beam_outputs = model.generate(
             input_ids=input_ids, attention_mask=attention_masks,
             do_sample=True,
-            temperature=0.7,
+            temperature=0.9,
             max_length=256,
             top_k=120,
             top_p=0.98,

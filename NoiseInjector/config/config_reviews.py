@@ -16,8 +16,8 @@ class RatingBehaviorConfig:
 class NearDuplicatesConfig:
     model: str = 'ramsrigouthamg/t5_paraphraser'
     rating: float = 4
-    review: str = ''
-    title: str = ''
+    review: Optional[str] = None
+    title: Optional[str] = None
 
 
 

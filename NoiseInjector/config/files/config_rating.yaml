@@ -1,5 +1,5 @@
 context:  timestamp_corruption
-budget: 50 # budget of ratings to add/remove/corrupt
+budget: 10000 # budget of ratings to add/remove/corrupt
 avoid_duplicates: true # if true, avoid adding duplicate ratings (same user-item pair) -- true for human-based operations
 
 # context 1 --  add / remove ratings with realistic noise injection
@@ -10,8 +10,8 @@ realistic_noise:
 #  k: 100                              # maximum nodes to add/remove ratings from given the allocated budget
   # how many ratings to add/remove per node (user/item)
   preserve_degree_distribution: true # preserve original user/item degree distribution and avoid intentional hubs
-  max_ratings_per_node: 10            # .inf means no limit
-  min_ratings_per_node: 1             # min ratings added per node
+  max_ratings_per_node: 100            # .inf means no limit
+  min_ratings_per_node: 10             # min ratings added per node
   rating_behavior:
     min_rating: 1
     max_rating: 5
@@ -25,8 +25,8 @@ item_burst_noise:
   target: item                        # item is default
   selection_strategy: top         # uniform | top | least  -- top (least) means focusing on most (least) active users or popular items
 #  hubs: 100                           # maximum number of hubs created with the provided budget -- the least, the higher the hubs will be
-  max_ratings_per_node: 50          # .inf means no limit
-  min_ratings_per_node: 10             # min ratings added per node
+  max_ratings_per_node: 300          # .inf means no limit
+  min_ratings_per_node: 100             # min ratings added per node
   rating_behavior:
     min_rating: 1
     max_rating: 5
@@ -39,10 +39,10 @@ item_burst_noise:
 user_burst_noise:
   operation: add                      # add is default
   target: user                        # user is default
-  selection_strategy: top         # uniform | top | least  -- top (least) means focusing on most (least) active users or popular items
+  selection_strategy: uniform         # uniform | top | least  -- top (least) means focusing on most (least) active users or popular items
 #  hubs: 100                           # number of hubs created -- the least, the higher the hubs will be
-  max_ratings_per_node: 50            # inf means no limit
-  min_ratings_per_node: 10             # min ratings added per node
+  max_ratings_per_node: 40            # inf means no limit
+  min_ratings_per_node: 20             # min ratings added per node
   rating_behavior:
     min_rating: 1
     max_rating: 5
@@ -55,8 +55,8 @@ user_burst_noise:
 timestamp_corruption:
   target: user                        # user | item  -- if user, corrupt timestamps of ratings from selected users; if item, corrupt timestamps of ratings to selected items;
   selection_strategy: uniform           # uniform | top | least -- random selection of edges
-  max_ratings_per_node: 50            # inf means no limit
-  min_ratings_per_node: 10             # min ratings added per node
+  max_ratings_per_node: 40            # inf means no limit
+  min_ratings_per_node: 20             # min ratings added per node
   temporal_behavior:
     corruption_mode: uniform    # uniform | forward | backward
     intensity: medium                 # low | medium | high -- low = days, medium = months, high = years
