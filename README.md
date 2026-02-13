@@ -43,14 +43,19 @@ RecProbe provides three level of noise injections, all configurable with dedicat
 
 **Evaluation.** The user defines a set of baselines that enable comparison between the original (unperturbed) dataset and the perturbed version. RecProbe then generates a single comparison table summarizing the results.
 
-# RecProbe Configuration
+# :screwdriver: RecProbe Configuration
 ### Input and Output
+RecProbe requires in input one file in JSONL, JSON or CSV containing the following fields:
+- user_id: the id of the user rating the item
+- item_id: the id of the rated item
+- rating: the rating given by a user to an item -- it is usually a numerical value
+- review_text: the textual review
+- title: title of the review
 
+If the dataset is yelp or a subset of amazon reviews 23, RecProble already provides support for them.
 
-### YAML Configuration
-### Base
-### Injections
-### Evaluation
+If the custom dataset contains these fields but with a different name, provide a mapping in the file ```src/data_model/reviewModel.py```.
+The output is a dataset in JSONL, JSON, or CSV formats. In addition, if the baselines are computed, RecProbe provides a unified table of comparison of performances.
 
 
 # Installation
