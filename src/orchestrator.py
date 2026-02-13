@@ -1,6 +1,6 @@
-from NoiseInjector.injectors.interactions.combined_injector import CombinedNoiseInjector
-from NoiseInjector.injectors.interactions.rating_injector import RatingNoiseInjector
-from NoiseInjector.injectors.interactions.review_injector import ReviewNoiseInjector
+from injectors.interactions.hybrid_injector import HybridNoiseInjector
+from injectors.interactions.rating_injector import RatingNoiseInjector
+from injectors.interactions.review_injector import ReviewNoiseInjector
 #from NoiseInjector.injectors.interactions.review_injector import ReviewNoiseInjector
 #from NoiseInjector.injectors.interactions.combined_injector import CombinedNoiseInjector
 from logger import get_logger, logging
@@ -11,7 +11,7 @@ class NoiseOrchestrator:
         self.config = config
         self.logger = logger
 
-    def apply(self, df):
+    def apply(self, df, df_val, df_test):
         obj = RatingNoiseInjector(self.logger,self.config)
         np = self.config.noise_profile
 
@@ -19,8 +19,8 @@ class NoiseOrchestrator:
             obj = RatingNoiseInjector(self.logger,self.config)
         elif np == 'review':
             obj = ReviewNoiseInjector(self.config,self.logger)
-        elif np == 'combined':
-            obj = CombinedNoiseInjector(self.config,self.logger)
-        df,modified = obj.apply_noise(df)
+        elif np == 'hybrid':
+            obj = HybridNoiseInjector(self.config,self.logger)
+        df,modified = obj.apply_noise(df,df_val, df_test)
 
         return df,modified

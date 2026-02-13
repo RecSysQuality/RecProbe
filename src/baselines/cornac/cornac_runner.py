@@ -10,10 +10,10 @@ import os
 import cornac
 from datetime import datetime
 from cornac.data import ReviewModality
-from NoiseInjector.baselines.quality_metrics import *
-from NoiseInjector.baselines.cornac.mapper import *
+from src.baselines.quality_metrics import *
+from src.baselines.cornac.mapper import *
 import pandas as pd
-from NoiseInjector.baselines.base import BaseBaselineRunner
+from src.baselines.base import BaseBaselineRunner
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # punta a NoiseInjector/
 

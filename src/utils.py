@@ -1,6 +1,10 @@
 import pandas as pd
 import numpy as np
 import random
+from datetime import datetime
+import os
+import glob
+
 
 def parse_timestamp(ts):
     # se è già stringa data
@@ -31,12 +35,49 @@ def per_node_budget(node_size, total_left,min_per_node,max_per_node):
     )
     return min(n, node_size-1, total_left)
 
+
 def sample_ratings(base_ratings, n, config):
+
     if config.rating_behavior.sampling_strategy == 'gaussian':
-        mu, sigma = base_ratings.mean(), base_ratings.std() or 1.0
+
+        mu = np.nanmean(base_ratings)
+        sigma = np.nanstd(base_ratings)
+
+        # fallback sicuri
+        if not np.isfinite(mu):
+            mu = (config.rating_behavior.min_rating +
+                  config.rating_behavior.max_rating) / 2
+
+        if not np.isfinite(sigma) or sigma == 0:
+            sigma = 1.0
+
         r = np.random.normal(mu, sigma, size=n)
-        return np.clip(np.rint(r), config.rating_behavior.min_rating, config.rating_behavior.max_rating).astype(int)
-    return np.random.randint(config.rating_behavior.min_rating, config.rating_behavior.max_rating + 1, size=n)
+
+        r = np.nan_to_num(
+            r,
+            nan=mu,
+            posinf=config.rating_behavior.max_rating,
+            neginf=config.rating_behavior.min_rating
+        )
+
+        return np.clip(
+            np.rint(r),
+            config.rating_behavior.min_rating,
+            config.rating_behavior.max_rating
+        ).astype(int)
+
+    return np.random.randint(
+        config.rating_behavior.min_rating,
+        config.rating_behavior.max_rating + 1,
+        size=n
+    )
+
+# def sample_ratings(base_ratings, n, config):
+#     if config.rating_behavior.sampling_strategy == 'gaussian':
+#         mu, sigma = base_ratings.mean(), base_ratings.std() or 1.0
+#         r = np.random.normal(mu, sigma, size=n)
+#         return np.clip(np.rint(r), config.rating_behavior.min_rating, config.rating_behavior.max_rating).astype(int)
+#     return np.random.randint(config.rating_behavior.min_rating, config.rating_behavior.max_rating + 1, size=n)
 
 def sample_reviews(df, config):
     if config.min_length_of_review > 0:
@@ -51,3 +92,73 @@ def ordered_nodes(df, target, strategy):
     if strategy == 'uniform':
         random.shuffle(nodes)
     return nodes
+
+
+
+def create_unique_table(dataset):
+    input_folder = f"./baselines/results/{dataset}/"
+    output_file = f"./baselines/results/{dataset}/comparison_{datetime.now().strftime('%Y%m%d_%H%M%S')}.tsv"
+    # 1. Prendo tutti i file tsv nella cartella
+    files = glob.glob(os.path.join(input_folder, "*.tsv"))
+
+    if not files:
+        raise ValueError("Nessun file TSV trovato nella cartella.")
+
+    # 2. Ordino per data di modifica (decrescente)
+    files = sorted(files, key=os.path.getmtime, reverse=True)
+
+    # 3. Seleziono file clean e noisy
+    clean_file = next((f for f in files if "clean" in os.path.basename(f)), None)
+    noisy_file = next((f for f in files if "noisy" in os.path.basename(f)), None)
+
+    if clean_file is None or noisy_file is None:
+        raise ValueError("Non trovo file con 'clean' o 'noisy' nel nome.")
+
+    # 4. Leggo i dataframe (TSV = sep="\t")
+    df_clean = pd.read_csv(clean_file, sep="\t")
+    df_noisy = pd.read_csv(noisy_file, sep="\t")
+
+    if "model" not in df_clean.columns or "model" not in df_noisy.columns:
+        raise ValueError("Entrambi i dataframe devono avere la colonna 'model'.")
+
+    # 5. Aggiungo suffissi ai modelli
+    df_clean = df_clean.copy()
+    df_noisy = df_noisy.copy()
+
+    df_clean["model"] = df_clean["model"].astype(str) + "_clean"
+    df_noisy["model"] = df_noisy["model"].astype(str) + "_noisy"
+
+    # 6. Estraggo nome base modello (senza suffisso)
+    df_clean["base_model"] = df_clean["model"].str.replace("_clean", "", regex=False)
+    df_noisy["base_model"] = df_noisy["model"].str.replace("_noisy", "", regex=False)
+
+    # 7. Merge per mettere clean sopra noisy per stesso modello
+    merged = pd.merge(
+        df_clean,
+        df_noisy,
+        on="base_model",
+        how="outer",
+        suffixes=("_clean", "_noisy")
+    )
+
+    # 8. Ricostruisco tabella finale alternando clean e noisy
+    rows = []
+    for _, row in merged.iterrows():
+        if not pd.isna(row.get("model_clean")):
+            clean_row = {col.replace("_clean", ""): row[col]
+                         for col in merged.columns if col.endswith("_clean")}
+            rows.append(clean_row)
+
+        if not pd.isna(row.get("model_noisy")):
+            noisy_row = {col.replace("_noisy", ""): row[col]
+                         for col in merged.columns if col.endswith("_noisy")}
+            rows.append(noisy_row)
+
+    final_df = pd.DataFrame(rows)
+
+    # 9. Salvo risultato unico
+    final_df.to_csv(output_file, sep="\t", index=False)
+
+    print(f"File salvato come: {output_file}")
+
+

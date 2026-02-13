@@ -1,0 +1,100 @@
+2026-02-11 16:10:14,245 | INFO | Loading JSONL file in chunks from /Users/ornellairrera/PycharmProjects/RecProbe/code/data/input/amazon_All_Beauty/All_Beauty.jsonl
+2026-02-11 16:10:20,561 | INFO | Finished loading JSONL file from /Users/ornellairrera/PycharmProjects/RecProbe/code/data/input/amazon_All_Beauty/All_Beauty.jsonl
+2026-02-11 16:10:22,520 | INFO | Extracting 3-core from the dataset
+2026-02-11 16:10:23,382 | INFO | Finished extracting 3-core. Remaining records: 9079
+2026-02-11 16:10:23,382 | INFO | Loaded df with 9079 records
+2026-02-11 16:10:23,384 | INFO | Unique users: 1266, Unique items: 1473
+2026-02-11 16:10:23,390 | INFO | Rating stats:
+count    9079.000000
+mean        4.325697
+std         0.949479
+min         1.000000
+25%         4.000000
+50%         5.000000
+75%         5.000000
+max         5.000000
+Name: rating, dtype: float64
+2026-02-11 16:10:23,390 | INFO | Rating value counts:
+rating
+1     186
+2     324
+3    1007
+4    2392
+5    5170
+Name: count, dtype: int64
+2026-02-11 16:10:23,390 | INFO | Average items per user:
+7.17
+2026-02-11 16:10:23,391 | INFO | Average users per item:
+6.16
+2026-02-11 16:10:23,391 | INFO | Max items per user:
+126.00
+2026-02-11 16:10:23,391 | INFO | Max users per item:
+45.00
+2026-02-11 16:10:23,391 | INFO | Sparsity of the dataset: 
+0.995131
+2026-02-11 16:10:23,490 | INFO | Loaded df with 9079 records
+2026-02-11 16:10:23,493 | INFO | Unique users: 1266, Unique items: 1473
+2026-02-11 16:10:23,499 | INFO | Rating stats:
+count    9079.000000
+mean        4.325697
+std         0.949479
+min         1.000000
+25%         4.000000
+50%         5.000000
+75%         5.000000
+max         5.000000
+Name: rating, dtype: float64
+2026-02-11 16:10:23,499 | INFO | Rating value counts:
+rating
+1     186
+2     324
+3    1007
+4    2392
+5    5170
+Name: count, dtype: int64
+2026-02-11 16:10:23,499 | INFO | Average items per user:
+7.17
+2026-02-11 16:10:23,499 | INFO | Average users per item:
+6.16
+2026-02-11 16:10:23,499 | INFO | Max items per user:
+126.00
+2026-02-11 16:10:23,499 | INFO | Max users per item:
+45.00
+2026-02-11 16:10:23,499 | INFO | Sparsity of the dataset: 
+0.995131
+2026-02-11 16:10:23,523 | INFO | Saving clean training DataFrame to CSV at /Users/ornellairrera/PycharmProjects/RecProbe/code/data/output/amazon_All_Beauty/train.csv
+2026-02-11 16:10:23,523 | INFO | Saving clean test DataFrame to CSV at /Users/ornellairrera/PycharmProjects/RecProbe/code/data/output/amazon_All_Beauty/test.csv
+2026-02-11 16:10:23,702 | INFO | Train set with 7263 rows
+2026-02-11 16:10:23,702 | INFO | Test set with 8172 rows
+2026-02-11 16:10:23,991 | INFO | Loaded df with 26361 records
+2026-02-11 16:10:23,995 | INFO | Unique users: 1265, Unique items: 1473
+2026-02-11 16:10:24,006 | INFO | Rating stats:
+count    26361.000000
+mean         4.272334
+std          0.956884
+min          1.000000
+25%          4.000000
+50%          5.000000
+75%          5.000000
+max          5.000000
+Name: rating, dtype: float64
+2026-02-11 16:10:24,006 | INFO | Rating value counts:
+rating
+1      557
+2      987
+3     3153
+4     7687
+5    13977
+Name: count, dtype: int64
+2026-02-11 16:10:24,006 | INFO | Average items per user:
+20.84
+2026-02-11 16:10:24,006 | INFO | Average users per item:
+17.90
+2026-02-11 16:10:24,006 | INFO | Max items per user:
+226.00
+2026-02-11 16:10:24,006 | INFO | Max users per item:
+92.00
+2026-02-11 16:10:24,006 | INFO | Sparsity of the dataset: 
+0.985853
+2026-02-11 16:10:24,018 | INFO | Saving noisy DataFrame to CSV at /Users/ornellairrera/PycharmProjects/RecProbe/code/data/output/amazon_All_Beauty/train_noisy_rating_user_burst_noise.csv
+2026-02-11 16:10:24,109 | INFO | noisy df saved.

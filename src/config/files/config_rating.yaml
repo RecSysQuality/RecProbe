@@ -1,5 +1,5 @@
 context:  timestamp_corruption
-budget: 10000 # budget of ratings to add/remove/corrupt
+budget: 100 # budget of ratings to add/remove/corrupt
 avoid_duplicates: true # if true, avoid adding duplicate ratings (same user-item pair) -- true for human-based operations
 
 # context 1 --  add / remove ratings with realistic noise injection
@@ -20,9 +20,9 @@ realistic_noise:
     start_timestamp: 1009459200      # start of temporal interval (inclusive) in UNIX timestamp format in seconds
     end_timestamp: 1798761600
 # context 2 -- item burst noise. Create item hubs by adding many ratings to few items
-item_burst_noise:
+rating_burst:
   operation: add                      # add is default
-  target: item                        # item is default
+  target: item                        # item or user
   selection_strategy: top         # uniform | top | least  -- top (least) means focusing on most (least) active users or popular items
 #  hubs: 100                           # maximum number of hubs created with the provided budget -- the least, the higher the hubs will be
   max_ratings_per_node: 300          # .inf means no limit

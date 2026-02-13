@@ -1,19 +1,17 @@
-
 import numpy as np
 import pandas as pd
 import random
-from transformers import T5ForConditionalGeneration,T5Tokenizer
-from NoiseInjector.injectors.base import BaseNoiseInjector
+from transformers import T5ForConditionalGeneration, T5Tokenizer
+from src.injectors.base import BaseNoiseInjector
 import random
 import nltk
 import torch
 import re
 from nltk.corpus import words as nltk_words
 
-
 from nltk.corpus import wordnet
 import json
-from NoiseInjector.utils import *
+from src.utils import *
 from transformers import pipeline
 
 
@@ -25,17 +23,16 @@ class ReviewNoiseInjector(BaseNoiseInjector):
         self.logger = logger
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
     # ==========================================================
     # PUBLIC API
     # ==========================================================
-    def apply_noise(self, df):
-        df = df[['user_id', 'item_id', 'rating','review_text','title', 'timestamp']].copy()
+    def apply_noise(self, df, df_val, df_test):
+        df = df[['user_id', 'item_id', 'rating', 'review_text', 'title', 'timestamp']].copy()
         ctx = self.config.context
         if ctx == "remove_reviews":
             return self._remove_noise(df)
         if ctx == "review_burst_noise":
-            return self._burst_noise(df)
+            return self._burst_noise(df, df_val, df_test)
         if ctx == "sentence_noise":
             return self._sentence_noise(df)
 
@@ -51,20 +48,19 @@ class ReviewNoiseInjector(BaseNoiseInjector):
         other = 'item_id' if target == 'user_id' else 'user_id'
         nodes = ordered_nodes(df, target, noise_config.selection_strategy)
         df = sample_reviews(df, noise_config)
-        return self._remove_reviews(df, nodes, target, other, config,noise_config)
-
+        return self._remove_reviews(df, nodes, target, other, config, noise_config)
 
     # ==========================================================
     # BURST NOISE
     # ==========================================================
-    def _burst_noise(self, df):
+    def _burst_noise(self, df, df_val, df_test):
         config = self.config
         noise_config = self.config.review_burst_noise
         target = 'user_id' if noise_config.target == 'user' else 'item_id'
         other = 'item_id' if target == 'user_id' else 'user_id'
         nodes = ordered_nodes(df, target, noise_config.selection_strategy)
         df = sample_reviews(df, noise_config)
-        return self._add_reviews(df, nodes, target, other, config, noise_config)
+        return self._add_reviews(df, df_val, df_test, nodes, target, other, config, noise_config)
 
     # ==========================================================
     # SENTENCE NOISE
@@ -77,11 +73,9 @@ class ReviewNoiseInjector(BaseNoiseInjector):
         other = 'item_id' if target == 'user_id' else 'user_id'
         nodes = ordered_nodes(df, target, noise_config.selection_strategy)
         df = sample_reviews(df, noise_config)
-        return self._add_sentence_noise(df, nodes, target, other, config,noise_config)
+        return self._add_sentence_noise(df, nodes, target, other, config, noise_config)
 
-
-
-    def _remove_reviews(self, df, nodes, target,other, config,noise_config):
+    def _remove_reviews(self, df, nodes, target, other, config, noise_config):
         remaining = self.budget
 
         start_ts = parse_timestamp(noise_config.temporal_interval.start_timestamp)
@@ -108,8 +102,8 @@ class ReviewNoiseInjector(BaseNoiseInjector):
             node_df = df.loc[node_idx]
 
             n = per_node_budget(len(node_df), remaining,
-                                      noise_config.min_reviews_per_node,
-                                      noise_config.max_reviews_per_node)
+                                noise_config.min_reviews_per_node,
+                                noise_config.max_reviews_per_node)
             if n <= 0:
                 continue
 
@@ -138,35 +132,30 @@ class ReviewNoiseInjector(BaseNoiseInjector):
         return df, removed
 
     # ==========================================================
-        # ADD (shared by realistic + burst)
+    # ADD (shared by realistic + burst)
     # ==========================================================
 
-
-    def _add_reviews(self, df, nodes, target, other, config, noise_config):
+    def _add_reviews(self, df, df_val, df_test, nodes, target, other, config, noise_config):
 
         rows = []
         remaining = self.budget
         all_other = df[other].unique()
-        model = T5ForConditionalGeneration.from_pretrained(
-            noise_config.near_duplicates_configuration.model,
-            use_safetensors=True
-        ).to(self.device)
-        # model = T5ForConditionalGeneration.from_pretrained(noise_config.near_duplicates_configuration.model).to(
-        #     self.device)
-        tokenizer = T5Tokenizer.from_pretrained(noise_config.near_duplicates_configuration.model)
 
-        seed_review, seed_title, seed_rating = '','',4
+
+        seed_review, seed_title, seed_rating = '', '', 4
 
         seed_review = noise_config.near_duplicates_configuration.review
         seed_title = noise_config.near_duplicates_configuration.title
         seed_rating = noise_config.near_duplicates_configuration.rating
 
         if noise_config.near_duplicates_configuration.review is not None:
-            new_reviews = self._paraphrase(model, tokenizer, text_list=[seed_review], num_seq=noise_config.max_reviews_per_node*2)
+            new_reviews = self._paraphrase(text=seed_review,noise_config=noise_config,
+                                           num_seq=noise_config.max_reviews_per_node * 2)
         if noise_config.near_duplicates_configuration.title is not None:
-            new_titles = self._paraphrase(model, tokenizer, text_list=[seed_title], num_seq=noise_config.max_reviews_per_node*2)
+            new_titles = self._paraphrase(text=seed_title,noise_config=noise_config,
+                                          num_seq=noise_config.max_reviews_per_node * 2)
 
-        df_grouped = df.groupby(target)
+        grouped = df.groupby(target)
 
         start_ts = parse_timestamp(noise_config.temporal_interval.start_timestamp)
         end_ts = parse_timestamp(noise_config.temporal_interval.end_timestamp)
@@ -177,12 +166,20 @@ class ReviewNoiseInjector(BaseNoiseInjector):
             seed_review = noise_config.near_duplicates_configuration.review
             seed_title = noise_config.near_duplicates_configuration.title
             seed_rating = noise_config.near_duplicates_configuration.rating
-            if node not in df_grouped.groups:
+            if node not in grouped.groups:
                 continue
 
-            node_idx = df_grouped.groups[node]
-            node_df = df.loc[node_idx]
-            used = node_df[other].unique()
+            node_df = grouped.get_group(node) if node in grouped.groups else pd.DataFrame(columns=df.columns)
+            used = node_df[other].unique() if not node_df.empty else np.array([])
+
+            if df_val is not None and df_test is not None:
+                node_df_val = df_val.groupby(target).get_group(node) if node in df_val.groupby(
+                    target).groups else pd.DataFrame(columns=df.columns)
+                node_df_test = df_test.groupby(target).get_group(node) if node in df_test.groupby(
+                    target).groups else pd.DataFrame(columns=df.columns)
+                used_val = node_df_val[other].unique() if not node_df_val.empty else np.array([])
+                used_test = node_df_test[other].unique() if not node_df_test.empty else np.array([])
+                used = np.concatenate((used, used_val, used_test))
 
             # Evita duplicati se richiesto
             available = np.setdiff1d(all_other, used) if getattr(config, "avoid_duplicates", False) else all_other
@@ -193,8 +190,8 @@ class ReviewNoiseInjector(BaseNoiseInjector):
             # n = per_node_budget(len(node_df), remaining, noise_config.min_reviews_per_node,
             #                     noise_config.max_reviews_per_node)
 
-            n = np.random.randint(noise_config.min_reviews_per_node,noise_config.max_reviews_per_node+1)
-            n = min(n,remaining)
+            n = np.random.randint(noise_config.min_reviews_per_node, noise_config.max_reviews_per_node + 1)
+            n = min(n, remaining)
 
             if n <= 0:
                 continue
@@ -209,7 +206,7 @@ class ReviewNoiseInjector(BaseNoiseInjector):
 
                 median_review_candidates = node_df[
                     (node_df['rating'] == seed_rating)
-                    ]['review_text'].tolist()
+                ]['review_text'].tolist()
 
                 median_title_candidates = node_df[node_df['rating'] == seed_rating]['title'].tolist()
 
@@ -220,8 +217,8 @@ class ReviewNoiseInjector(BaseNoiseInjector):
                     seed_title = median_title_candidates[idx] if median_title_candidates else ''
                 else:
                     continue
-                new_reviews = self._paraphrase(model, tokenizer, [seed_review], num_seq=n)
-                new_titles = self._paraphrase(model, tokenizer, [seed_title], num_seq=n) if seed_title else [''] * n
+                new_reviews = self._paraphrase(seed_review,noise_config, num_seq=n)
+                new_titles = self._paraphrase(seed_title,noise_config, num_seq=n) if seed_title else [''] * n
 
             if not seed_title:
                 new_titles = [''] * n
@@ -248,8 +245,8 @@ class ReviewNoiseInjector(BaseNoiseInjector):
             # print(len(sampled_other))
             # print(len(timestamps))
             # print('\n\n')
-            sampled_other = sampled_other[0:min(n,len(new_reviews))]
-            timestamps = timestamps[0:min(n,len(new_reviews))]
+            sampled_other = sampled_other[0:min(n, len(new_reviews))]
+            timestamps = timestamps[0:min(n, len(new_reviews))]
             rows.append(pd.DataFrame({
                 target: node,
                 other: sampled_other,
@@ -263,9 +260,6 @@ class ReviewNoiseInjector(BaseNoiseInjector):
         df['noise'] = False
         added = pd.concat(rows, ignore_index=True) if rows else pd.DataFrame(columns=df.columns)
         return pd.concat([df, added], ignore_index=True), added
-
-
-
 
     def _add_sentence_noise(self, df, nodes, target, other, config, noise_config):
         df['noise'] = False
@@ -282,8 +276,7 @@ class ReviewNoiseInjector(BaseNoiseInjector):
         pool = [p for p in random.sample(word_list_all, 300) if len(p) > 5]
 
         if noise_config.noise_type == 'sentence_noise':
-            generator = pipeline("text-generation", model=noise_config.model, device=0)  # usa GPU se disponibile
-            pool = self._generate_pool(generator, depth=self.budget*2, batch_size=128,topics = pool)
+            pool = self._generate_pool(depth=self.budget * 2, noise_config=noise_config, topics=pool)
 
         df_grouped = df.groupby(target)
 
@@ -380,12 +373,12 @@ class ReviewNoiseInjector(BaseNoiseInjector):
 
         df['noise'] = False
         mod = df.loc[mod_idx]
-        df.loc[mod_idx,'noise'] = True
+        df.loc[mod_idx, 'noise'] = True
         return df, mod
 
+    def _generate_pool(self, depth, noise_config, topics=None):
 
-
-    def _generate_pool(self,generator,depth,batch_size=64,topics = None):
+        generator = pipeline("text-generation", model=noise_config.model, device=0)  # usa GPU se disponibile
         # Process in batches
         if self.device == 'cpu':
             depth = 10
@@ -404,22 +397,19 @@ class ReviewNoiseInjector(BaseNoiseInjector):
             ]
 
         num_seq = depth / len(topics)
+        # with open("../data_handler/prompt_config.json") as f:
+        #     config = json.load(f)
 
         batch_prompts = []
         for topic in topics:
             prompt = f"""Write a short sentence of about 15 words about {topic}.
             Returned sentence:
             """
+
+            # prompt_template = config["prompt_sentence_noise"]
+            # prompt = prompt_template.format(text=topic)
             batch_prompts.append(prompt)
-        # for topic in topics:
-        #     messages = [
-        #         {"role": "system", "content": "You generate short coherent sentences."},
-        #         {"role": "user", "content": f"Write a short sentence of 15 words about {topic}."}
-        #     ]
-        #     prompt = generator.tokenizer.apply_chat_template(
-        #         messages, tokenize=False, add_generation_prompt=True
-        #     )
-        #     batch_prompts.append(prompt)
+
         res = generator(
             batch_prompts,
             do_sample=True,
@@ -429,19 +419,30 @@ class ReviewNoiseInjector(BaseNoiseInjector):
             top_k=50,
             top_p=0.95
         )
-        #results = [r[0]['generated_text'].split('<|assistant|>\n')[1] for r in res]
-        #results = [out["generated_text"].split('Returned sentence:\n')[-1].replace('"', '') for out in res]
-        results = [out["generated_text"].split('Returned sentence: \n')[-1].split('\n')[0].replace('"', '') for out in res]
+        results = [out["generated_text"].split('Returned sentence: \n')[-1].split('\n')[0].replace('"', '') for out in
+                   res]
 
         return results
 
-    def _paraphrase(self,model,tokenizer,text_list,batch_size=64,num_seq = 2):
+    def _paraphrase(self, text, noise_config, num_seq=2):
         outputs = []
+        model = T5ForConditionalGeneration.from_pretrained(
+            noise_config.near_duplicates_configuration.model,
+            use_safetensors=True
+        ).to(self.device)
+
+        tokenizer = T5Tokenizer.from_pretrained(noise_config.near_duplicates_configuration.model)
 
         self.logger.info("Paraphrasing...")
 
-        text = "paraphrase: " + text_list[0]
-        encoding = tokenizer.encode_plus(text, pad_to_max_length=True, return_tensors="pt")
+        prompt = "paraphrase: " + text
+        # with open("../data_handler/prompt_config.json") as f:
+        #     config = json.load(f)
+        #
+        # prompt_template = config["prompt_paraphrase"]["prompt_text"]
+        # prompt = prompt_template.format(text=text)
+
+        encoding = tokenizer.encode_plus(prompt, pad_to_max_length=True, return_tensors="pt")
         input_ids, attention_masks = encoding["input_ids"].to(self.device), encoding["attention_mask"].to(self.device)
 
         # set top_k = 50 and set top_p = 0.95 and num_return_sequences = 3
@@ -456,10 +457,8 @@ class ReviewNoiseInjector(BaseNoiseInjector):
             num_return_sequences=num_seq
         )
 
-
         final_outputs = []
         for beam_output in beam_outputs:
             sent = tokenizer.decode(beam_output, skip_special_tokens=True, clean_up_tokenization_spaces=True)
             final_outputs.append(sent)
         return final_outputs
-

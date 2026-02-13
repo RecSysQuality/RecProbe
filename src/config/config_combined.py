@@ -78,9 +78,20 @@ class RatingReviewConfig:
 # =========================
 # Loader YAML
 # =========================
-def load_combined_config(path: str = "files/config_combined.yaml") -> RatingReviewConfig:
+def load_hybrid_config(path: str = "files/config_hybrid.yaml",streamlit: bool = False) -> RatingReviewConfig:
     with open(path, "r") as f:
         cfg_dict = yaml.safe_load(f)
+    if streamlit:
+        # Trova l'indice di noise_profile nell'ordine originale
+        keys = list(cfg_dict.keys())
+        start_index = keys.index("noise_profile")
+
+        # Crea un nuovo dict solo dalla chiave noise_profile in poi
+        filtered_dict = {
+            k: cfg_dict[k] for k in keys[start_index:]
+        }
+
+        cfg_dict = filtered_dict
 
     return from_dict(
         data_class=RatingReviewConfig,
@@ -91,5 +102,5 @@ def load_combined_config(path: str = "files/config_combined.yaml") -> RatingRevi
 # Test
 # =========================
 if __name__ == "__main__":
-    rating_cfg = load_combined_config("files/config_combined.yaml")
+    rating_cfg = load_hybrid_config("files/config_hybrid.yaml")
     print(rating_cfg)

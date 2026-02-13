@@ -2,9 +2,9 @@
 import numpy as np
 import pandas as pd
 import random
-from NoiseInjector.injectors.base import BaseNoiseInjector
+from src.injectors.base import BaseNoiseInjector
 
-from NoiseInjector.utils import *
+from src.utils import *
 class RatingNoiseInjector(BaseNoiseInjector):
 
     def __init__(self, logger,config):
@@ -15,16 +15,16 @@ class RatingNoiseInjector(BaseNoiseInjector):
     # ==========================================================
     # PUBLIC API
     # ==========================================================
-    def apply_noise(self, df):
+    def apply_noise(self, df, df_val, df_test):
         df = df[['user_id', 'item_id', 'rating', 'timestamp']].copy()
 
         ctx = self.config.context
         if ctx == "realistic_noise":
             return self._realistic_noise(df)
         elif ctx == "user_burst_noise":
-            return self._burst_noise(df, target='user_id')
-        elif ctx == "item_burst_noise":
-            return self._burst_noise(df, target='item_id')
+            return self._burst_noise(df,df_val, df_test)
+        # elif ctx == "item_burst_noise":
+        #     return self._burst_noise(df,df_val, df_test, target='item_id')
         elif ctx == "timestamp_corruption":
             return self._timestamp_corruption(df)
 
@@ -107,7 +107,98 @@ class RatingNoiseInjector(BaseNoiseInjector):
     # ==========================================================
     # ADD (shared by realistic + burst)
     # ==========================================================
-    def _add_ratings(self, df, nodes, target, other, config,noise_config):
+    def _add_ratings_0(self, df, df_val, df_test, nodes, target, other, config, noise_config):
+        """
+        Fully vectorized version: generates all noisy ratings at once without looping over nodes.
+        """
+        remaining = self.budget
+        all_other = df[other].unique()
+
+        # Precompute used sets for all nodes
+        used_dict = {node: set(df[df[target] == node][other].unique()) for node in nodes}
+        if df_val is not None:
+            for node in nodes:
+                used_dict[node].update(df_val[df_val[target] == node][other].unique())
+        if df_test is not None:
+            for node in nodes:
+                used_dict[node].update(df_test[df_test[target] == node][other].unique())
+
+        # Randomly assign number of ratings per node
+        n_per_node = np.random.randint(noise_config.min_ratings_per_node,
+                                       noise_config.max_ratings_per_node + 1,
+                                       size=len(nodes))
+
+        # Adjust by degree distribution if needed
+        degrees = df.groupby(target)[other].nunique()
+        max_degree = degrees.max()
+        if getattr(noise_config, 'preserve_degree_distribution', None):
+            factors = np.array([(max_degree - degrees.get(node, 0)) / max_degree for node in nodes])
+            n_per_node = np.maximum(1, np.ceil(n_per_node * factors).astype(int))
+
+        # Apply remaining budget
+        total = n_per_node.sum()
+        if total > remaining:
+            scale = remaining / total
+            n_per_node = np.floor(n_per_node * scale).astype(int)
+
+        # Remove nodes with zero ratings
+        valid_idx = n_per_node > 0
+        nodes = np.array(nodes)[valid_idx]
+        n_per_node = n_per_node[valid_idx]
+
+        # Prepare final arrays
+        all_targets, all_others, all_ratings = [], [], []
+
+        # Generate all ratings and other IDs vectorized
+        for node, n in zip(nodes, n_per_node):
+            # Available "other" nodes
+            if getattr(noise_config, 'avoid_duplicates', False):
+                available = np.array([x for x in all_other if x not in used_dict[node]])
+            else:
+                available = all_other
+
+            if len(available) == 0:
+                continue
+
+            n = min(n, len(available))
+            sampled_other = np.random.choice(available, size=n, replace=False)
+            node_ratings = df[df[target] == node]['rating']
+            if len(node_ratings) == 0:
+                sampled_ratings = np.random.randint(1, 6, size=n)
+            else:
+                sampled_ratings = sample_ratings(node_ratings, n, noise_config)
+
+            all_targets.extend([node] * n)
+            all_others.extend(sampled_other)
+            all_ratings.extend(sampled_ratings)
+
+        if len(all_targets) == 0:
+            df['noise'] = False
+            return df, pd.DataFrame(columns=df.columns)
+
+        # Generate timestamps vectorized
+        start_ts = parse_timestamp(noise_config.temporal_interval.start_timestamp)
+        end_ts = parse_timestamp(noise_config.temporal_interval.end_timestamp)
+
+        if start_ts == 0 and end_ts == 0:
+            timestamps = np.full(len(all_targets), int(pd.Timestamp.now().timestamp()))
+        else:
+            timestamps = (
+                        (start_ts + (end_ts - start_ts) * np.random.rand(len(all_targets))).astype('int64') // 10 ** 9)
+
+        # Create final DataFrame
+        added = pd.DataFrame({
+            target: all_targets,
+            other: all_others,
+            'rating': all_ratings,
+            'timestamp': timestamps,
+            'noise': True
+        })
+
+        df['noise'] = False
+        return pd.concat([df, added], ignore_index=True), added
+
+    def _add_ratings(self, df, df_val, df_test, nodes, target, other, config,noise_config):
         rows = []
         remaining = self.budget
         all_other = df[other].unique()
@@ -125,20 +216,16 @@ class RatingNoiseInjector(BaseNoiseInjector):
 
             node_df = grouped.get_group(node) if node in grouped.groups else pd.DataFrame(columns=df.columns)
             used = node_df[other].unique() if not node_df.empty else np.array([])
+            if df_val is not None and df_test is not None:
+                node_df_val = df_val.groupby(target).get_group(node) if node in df_val.groupby(target).groups else pd.DataFrame(columns=df.columns)
+                node_df_test = df_test.groupby(target).get_group(node) if node in df_test.groupby(target).groups else pd.DataFrame(columns=df.columns)
+                used_val = node_df_val[other].unique() if not node_df_val.empty else np.array([])
+                used_test = node_df_test[other].unique() if not node_df_test.empty else np.array([])
+                used = np.concatenate((used, used_val, used_test))
             available = np.setdiff1d(all_other, used) if getattr(noise_config, 'avoid_duplicates', False) else all_other
             if len(available) == 0:
                 continue
 
-            # node_df = df[df[target] == node]
-            # used = node_df[other].unique()
-            # available = all_other
-            # if config.avoid_duplicates:
-            #     available = np.setdiff1d(all_other, used)
-            #
-            # if len(available) == 0:
-            #     continue
-
-            #n = per_node_budget(len(node_df), remaining, noise_config.min_ratings_per_node,noise_config.max_ratings_per_node)
             n = np.random.randint(noise_config.min_ratings_per_node,noise_config.max_ratings_per_node + 1)
             if n <= 0:
                 continue
@@ -164,6 +251,7 @@ class RatingNoiseInjector(BaseNoiseInjector):
             }))
 
             remaining -= n
+            print(remaining)
         df['noise'] = False
         added = pd.concat(rows, ignore_index=True) if rows else pd.DataFrame(columns=df.columns)
         return pd.concat([df, added], ignore_index=True), added
@@ -171,16 +259,17 @@ class RatingNoiseInjector(BaseNoiseInjector):
     # ==========================================================
     # BURST NOISE
     # ==========================================================
-    def _burst_noise(self, df, target):
+    def _burst_noise(self, df,df_val, df_test, target):
+        noise_config = self.config.rating_burst_noise
         config = self.config
-        if target == 'item_id':
-            noise_config = self.config.item_burst_noise
-        else:
-            noise_config = self.config.user_burst_noise
-
+        # if target == 'item_id':
+        #     noise_config = self.config.item_burst_noise
+        # else:
+        #     noise_config = self.config.user_burst_noise
+        target = noise_config.target
         other = 'item_id' if target == 'user_id' else 'user_id'
         nodes = ordered_nodes(df, target, noise_config.selection_strategy)
-        return self._add_ratings(df, nodes, target, other, config,noise_config)
+        return self._add_ratings(df,df_val,df_test, nodes, target, other, config,noise_config)
 
     # ==========================================================
     # TIMESTAMP CORRUPTION

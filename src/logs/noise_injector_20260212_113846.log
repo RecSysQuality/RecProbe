@@ -1,0 +1,32 @@
+2026-02-12 11:38:51,797 | INFO | Saving noisy DataFrame to CSV at /Users/ornellairrera/PycharmProjects/RecProbe/src/data/output/amazon_All_Beauty/train_noisy_rating_user_burst_noise.csv
+2026-02-12 11:38:51,917 | INFO | Loaded df with 17293 records
+2026-02-12 11:38:51,919 | INFO | Unique users: 1260, Unique items: 1470
+
+
+2026-02-12 11:38:51,919 | INFO | Total interactions: 17293
+
+
+2026-02-12 11:38:51,919 | INFO | Total noisy interactions: 0
+
+
+2026-02-12 11:38:51,919 | INFO | Loaded df with 907 records
+2026-02-12 11:38:51,920 | INFO | Unique users: 551, Unique items: 675
+
+
+2026-02-12 11:38:51,920 | INFO | Total interactions: 907
+
+
+2026-02-12 11:38:51,920 | INFO | Total noisy interactions: 0
+
+
+2026-02-12 11:38:51,920 | INFO | Loaded df with 8172 records
+2026-02-12 11:38:51,921 | INFO | Unique users: 1265, Unique items: 1473
+
+
+2026-02-12 11:38:51,921 | INFO | Total interactions: 8172
+
+
+2026-02-12 11:38:51,921 | INFO | Total noisy interactions: 0
+
+
+2026-02-12 11:38:51,922 | INFO | noisy df saved.

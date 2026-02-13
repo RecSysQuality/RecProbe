@@ -6,7 +6,7 @@ class BaseNoiseInjector(ABC):
         self.config = config
 
     @abstractmethod
-    def apply_noise(self, df: pd.DataFrame) -> pd.DataFrame:
+    def apply_noise(self, df: pd.DataFrame, df_val: pd.DataFrame, df_test: pd.DataFrame) -> pd.DataFrame:
         """Applica rumore a livello metadata"""
         pass
 

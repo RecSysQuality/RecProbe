@@ -1,7 +1,7 @@
 input:
   reviews:
-    file_name: All_Beauty
-    format: jsonl
+    file_name: yelp_academic_dataset_review
+    format: json
     separator: ','
   items:
     file_name: meta_All_Beauty
@@ -9,7 +9,6 @@ input:
     separator: ','
 
 output:
-  target: cornac
   reviews:
     format: csv
     separator: ','
@@ -18,10 +17,21 @@ output:
     separator: ','
 
 noise_profile: rating  # rating | review | combined
-kcore: 3
-split: 0.8 # if 1.0: no split -- i.e., no data for test, the entire dataset is polluted
+kcore: 20
+min_rating: 1
+min_review_length: 0
+
+split: # if 1.0: no split -- i.e., no data for test, the entire dataset is polluted
+  training: 0.8
+  test: 0.1
+  validation: 0.1
+  noise_in_test: false # if true, the noise is injected in the test set as well. If false, the noise is injected only in the training set
+  strategy: random holdout # available by default: random holdout | temporal leave-one-out | random leave-one-out
+
+
+
 drop_duplicates: true
-dataset: amazon_All_Beauty
+dataset: yelp
 random_seed: 42
 verbose: true
 

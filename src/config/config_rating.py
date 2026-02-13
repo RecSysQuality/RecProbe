@@ -123,9 +123,21 @@ class RatingConfig:
 # =========================
 # Loader YAML
 # =========================
-def load_rating_config(path: str = "files/config_rating.yaml") -> RatingConfig:
+def load_rating_config(path: str = "files/config_rating.yaml",streamlit: bool = False) -> RatingConfig:
     with open(path, "r") as f:
         cfg_dict = yaml.safe_load(f)
+
+    if streamlit:
+        # Trova l'indice di noise_profile nell'ordine originale
+        keys = list(cfg_dict.keys())
+        start_index = keys.index("noise_profile")
+
+        # Crea un nuovo dict solo dalla chiave noise_profile in poi
+        filtered_dict = {
+            k: cfg_dict[k] for k in keys[start_index:]
+        }
+
+        cfg_dict = filtered_dict
 
     return from_dict(
         data_class=RatingConfig,
