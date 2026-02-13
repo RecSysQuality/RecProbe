@@ -131,12 +131,13 @@ class DatasetLoader:
                 df = df[
                     ~((df['noise']) & (df['pair'].isin(test_pairs)) & (df['pair'].isin(validation_pairs)))
                 ].drop(columns='pair')
-                train = df.drop(columns=['noise'])
-
-                train.to_csv(path, index=False, sep=separator)
+                train = df.copy()
                 self._log_split(train)
                 self._log_split(validation)
                 self._log_split(test)
+                train = train.drop(columns=['noise'])
+                train.to_csv(path, index=False, sep=separator)
+
                 return
 
 

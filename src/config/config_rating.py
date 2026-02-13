@@ -116,8 +116,7 @@ class RatingConfig:
     avoid_duplicates: bool = True
 
     realistic_noise: Optional[RealisticNoiseConfig] = None
-    user_burst_noise: Optional[UserBurstNoiseConfig] = None
-    item_burst_noise: Optional[ItemBurstNoiseConfig] = None
+    rating_burst: Optional[UserBurstNoiseConfig] = None
     timestamp_corruption: Optional[TimestampCorruptionConfig] = None
 
 # =========================

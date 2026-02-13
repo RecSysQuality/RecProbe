@@ -36,7 +36,7 @@ class RatingNoiseInjector(BaseNoiseInjector):
     def _realistic_noise(self, df):
         config = self.config
         noise_config = self.config.realistic_noise
-        target = 'user_id' if config.realistic_noise.target == 'user' else 'item_id'
+        target = 'user_id' if noise_config.target == 'user' else 'item_id'
         other = 'item_id' if target == 'user_id' else 'user_id'
 
         nodes = ordered_nodes(df, target, noise_config.selection_strategy)
@@ -259,14 +259,11 @@ class RatingNoiseInjector(BaseNoiseInjector):
     # ==========================================================
     # BURST NOISE
     # ==========================================================
-    def _burst_noise(self, df,df_val, df_test, target):
-        noise_config = self.config.rating_burst_noise
+    def _burst_noise(self, df,df_val, df_test):
+        noise_config = self.config.rating_burst
         config = self.config
-        # if target == 'item_id':
-        #     noise_config = self.config.item_burst_noise
-        # else:
-        #     noise_config = self.config.user_burst_noise
-        target = noise_config.target
+
+        target = 'user_id' if noise_config.target == 'user' else 'item_id'
         other = 'item_id' if target == 'user_id' else 'user_id'
         nodes = ordered_nodes(df, target, noise_config.selection_strategy)
         return self._add_ratings(df,df_val,df_test, nodes, target, other, config,noise_config)

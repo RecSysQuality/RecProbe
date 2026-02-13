@@ -4,7 +4,10 @@ import random
 from datetime import datetime
 import os
 import glob
-
+import os
+import glob
+import pandas as pd
+from datetime import datetime
 
 def parse_timestamp(ts):
     # se è già stringa data
@@ -95,44 +98,53 @@ def ordered_nodes(df, target, strategy):
 
 
 
+
+
 def create_unique_table(dataset):
+
     input_folder = f"./baselines/results/{dataset}/"
     output_file = f"./baselines/results/{dataset}/comparison_{datetime.now().strftime('%Y%m%d_%H%M%S')}.tsv"
-    # 1. Prendo tutti i file tsv nella cartella
+
+    # 1️⃣ Prendo tutti i TSV
     files = glob.glob(os.path.join(input_folder, "*.tsv"))
 
     if not files:
         raise ValueError("Nessun file TSV trovato nella cartella.")
 
-    # 2. Ordino per data di modifica (decrescente)
-    files = sorted(files, key=os.path.getmtime, reverse=True)
+    # 2️⃣ Separo clean e noisy
+    clean_files = [f for f in files if "clean" in os.path.basename(f)]
+    noisy_files = [f for f in files if "noisy" in os.path.basename(f)]
 
-    # 3. Seleziono file clean e noisy
-    clean_file = next((f for f in files if "clean" in os.path.basename(f)), None)
-    noisy_file = next((f for f in files if "noisy" in os.path.basename(f)), None)
+    if not clean_files or not noisy_files:
+        raise ValueError("Servono almeno un file clean e uno noisy.")
 
-    if clean_file is None or noisy_file is None:
-        raise ValueError("Non trovo file con 'clean' o 'noisy' nel nome.")
+    # 3️⃣ Leggo e concateno tutti i clean
+    df_clean = pd.concat(
+        [pd.read_csv(f, sep="\t") for f in clean_files],
+        ignore_index=True
+    )
 
-    # 4. Leggo i dataframe (TSV = sep="\t")
-    df_clean = pd.read_csv(clean_file, sep="\t")
-    df_noisy = pd.read_csv(noisy_file, sep="\t")
+    # 4️⃣ Leggo e concateno tutti i noisy
+    df_noisy = pd.concat(
+        [pd.read_csv(f, sep="\t") for f in noisy_files],
+        ignore_index=True
+    )
 
     if "model" not in df_clean.columns or "model" not in df_noisy.columns:
         raise ValueError("Entrambi i dataframe devono avere la colonna 'model'.")
 
-    # 5. Aggiungo suffissi ai modelli
+    # 5️⃣ Aggiungo suffissi
     df_clean = df_clean.copy()
     df_noisy = df_noisy.copy()
 
     df_clean["model"] = df_clean["model"].astype(str) + "_clean"
     df_noisy["model"] = df_noisy["model"].astype(str) + "_noisy"
 
-    # 6. Estraggo nome base modello (senza suffisso)
+    # 6️⃣ Base model
     df_clean["base_model"] = df_clean["model"].str.replace("_clean", "", regex=False)
     df_noisy["base_model"] = df_noisy["model"].str.replace("_noisy", "", regex=False)
 
-    # 7. Merge per mettere clean sopra noisy per stesso modello
+    # 7️⃣ Merge globale
     merged = pd.merge(
         df_clean,
         df_noisy,
@@ -141,24 +153,34 @@ def create_unique_table(dataset):
         suffixes=("_clean", "_noisy")
     )
 
-    # 8. Ricostruisco tabella finale alternando clean e noisy
+    # 8️⃣ Alterno righe
     rows = []
+
     for _, row in merged.iterrows():
+
+        # CLEAN
+        clean_cols = [c for c in merged.columns if c.endswith("_clean")]
         if not pd.isna(row.get("model_clean")):
-            clean_row = {col.replace("_clean", ""): row[col]
-                         for col in merged.columns if col.endswith("_clean")}
+            clean_row = {
+                col.replace("_clean", ""): row[col]
+                for col in clean_cols
+            }
             rows.append(clean_row)
 
+        # NOISY
+        noisy_cols = [c for c in merged.columns if c.endswith("_noisy")]
         if not pd.isna(row.get("model_noisy")):
-            noisy_row = {col.replace("_noisy", ""): row[col]
-                         for col in merged.columns if col.endswith("_noisy")}
+            noisy_row = {
+                col.replace("_noisy", ""): row[col]
+                for col in noisy_cols
+            }
             rows.append(noisy_row)
 
     final_df = pd.DataFrame(rows)
 
-    # 9. Salvo risultato unico
+    # 9️⃣ Salvo
     final_df.to_csv(output_file, sep="\t", index=False)
 
     print(f"File salvato come: {output_file}")
 
-
+    return final_df

@@ -79,7 +79,7 @@ def random_holdout(df: pd.DataFrame, training: float = 0.8, validation: float = 
         # test_df = df[:-n_test]
     train_df = df[:n_train]
     validation_df = df[n_train:n_train + n_validation]
-    test_df = df[:-n_test]
+    test_df = df[-n_test:]
     # Shuffle finale
     train_df = shuffle(train_df, random_state=seed).reset_index(drop=True)
     validation_df = shuffle(validation_df, random_state=seed).reset_index(drop=True)

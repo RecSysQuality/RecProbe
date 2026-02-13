@@ -110,8 +110,6 @@ def load_config(
 
 def load_streamlit_config(
     path: str = "streamlit/generated_configs/config.yaml",
-    profile: str = "rating",
-    context: str = "realistic_noise"
 ) -> Config:
 
 
@@ -121,10 +119,8 @@ def load_streamlit_config(
     input_cfg = InputConfig(**cfg_dict["input"])
     output_cfg = OutputConfig(**cfg_dict["output"])
     split_cfg = SplitConfig(**cfg_dict["split"])
-    if profile:
-        noise_profile = profile
-    else:
-        noise_profile = cfg_dict.get("noise_profile", profile)
+
+    noise_profile = cfg_dict.get("noise_profile")
 
     if noise_profile == "rating":
         noise_config = load_rating_config(path,streamlit=True)
@@ -134,14 +130,13 @@ def load_streamlit_config(
         noise_config = load_hybrid_config(path,streamlit=True)
     else:
         raise ValueError(f"Unknown noise_profile: {noise_profile}")
-    if context:
-        noise_config.context = context
+
 
     return Config(
         input=input_cfg,
         output=output_cfg,
         noise_profile=noise_profile,
-        noise_context=context,
+        noise_context=noise_config.context,
         split=split_cfg,
         random_seed=cfg_dict.get("random_seed", 42),
         kcore=cfg_dict.get("kcore", 5),

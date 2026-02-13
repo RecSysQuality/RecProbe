@@ -1,5 +1,5 @@
 context:  timestamp_corruption
-budget: 100 # budget of ratings to add/remove/corrupt
+budget: 1000 # budget of ratings to add/remove/corrupt
 avoid_duplicates: true # if true, avoid adding duplicate ratings (same user-item pair) -- true for human-based operations
 
 # context 1 --  add / remove ratings with realistic noise injection

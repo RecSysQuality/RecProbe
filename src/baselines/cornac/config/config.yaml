@@ -1,0 +1,22 @@
+quality: true # set to false not to compute quality metrics
+cornac:
+  models:
+    - name: BPR
+      params:
+        k: 50
+        max_iter: 100
+        learning_rate: 0.01
+        lambda_reg: 0.001
+        seed: 42
+    - name: MostPop
+      params: {}
+  metrics:
+    - NDCG:
+        k: 10
+    - Recall:
+        k: 10
+
+
+
+
+

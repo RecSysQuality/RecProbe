@@ -17,27 +17,25 @@ from src.baselines.base import BaseBaselineRunner
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # punta a NoiseInjector/
 
-class CornacExperimentRunner(BaseBaselineRunner):
+class RecBoleExperimentRunner(BaseBaselineRunner):
     def __init__(self,config, clean):
         self.config = config
         self.clean = clean
         self.dataset = self.config['dataset']
         self.profile = self.config['profile']
-        self.quality = config['quality']
+        self.quality = self.config['quality']
 
-    def run(self,training_path,validation_path,test_path):
+    def run(self,training_path,test_path):
         train_data = Reader().read(training_path, sep=',', skip_lines=1)
         test_data = Reader().read(test_path, sep=',', skip_lines=1)
-        validation_data = Reader().read(validation_path, sep=',', skip_lines=1)
         all_items = pd.read_csv(training_path)['item_id'].unique().tolist() + pd.read_csv(test_path)['item_id'].unique().tolist()
-        all_items = list(set(all_items))# o lista di tutti gli item nel dataset
+        all_items = list(set(all_items)) # o lista di tutti gli item nel dataset
         interaction_counts = Counter(pd.read_csv(training_path)['item_id'].tolist() + pd.read_csv(test_path)['item_id'].tolist())
 
 
         eval_method = BaseMethod.from_splits(
             train_data=train_data,
             test_data=test_data,
-            val_data=validation_data,
             fmt='UIR',  # or your actual format
             exclude_unknowns=False,  # or True, depending on your setup
             verbose=True
@@ -80,7 +78,7 @@ class CornacExperimentRunner(BaseBaselineRunner):
         df = pd.DataFrame(rows).set_index('model')
         df = df.round(4)
         # Salviamo come TSV
-        out_name = f"results_cornac_clean_{datetime.now().strftime('%Y%m%d_%H%M%S')}.tsv" if self.clean else f"results_cornac_noisy_{datetime.now().strftime('%Y%m%d_%H%M%S')}.tsv"
+        out_name = f"results_clean_{datetime.now().strftime('%Y%m%d_%H%M%S')}.tsv" if self.clean else f"results_noisy_{datetime.now().strftime('%Y%m%d_%H%M%S')}.tsv"
         if not os.path.exists(f"{BASE_DIR}/../results/{self.dataset}/{out_name}"):
             os.makedirs(f"{BASE_DIR}/../results/{self.dataset}",exist_ok=True)
         df.to_csv(f"{BASE_DIR}/../results/{self.dataset}/{out_name}", sep='\t', index=True)

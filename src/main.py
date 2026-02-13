@@ -3,7 +3,7 @@ import pandas as pd
 from data_handler.loader import DatasetLoader
 from orchestrator import NoiseOrchestrator
 from baselines_orchestrator import BaselinesOrchestrator
-from config.config import load_config
+from config.config import load_config,load_streamlit_config
 import os
 from logger import get_logger, logging
 from datetime import datetime
@@ -128,27 +128,29 @@ def main():
         path_validation = f"{BASE_DIR}/data/output/{config.dataset}/validation.csv"
         logger.info("Checking file existence...")
 
-        config_path = f"{BASE_DIR}/baselines/config.yaml"
-        with open(config_path) as f:
-            cfg_dict = yaml.safe_load(f)
-        baseline_config = cfg_dict
-        baseline_config['dataset'] = config.dataset
-        baseline_config['profile'] = profile
+        config_cornac_path = f"{BASE_DIR}/baselines/cornac/config/config.yaml"
+        config_recbole_path = f"{BASE_DIR}/baselines/recbole/config/config.yaml"
+        config_path = f"{BASE_DIR}/baselines/custom/config/config.yaml"
 
-        baselines_orchestrator = BaselinesOrchestrator(logger, baseline_config)
+        baselines_cornac_orchestrator = BaselinesOrchestrator(logger, config_cornac_path,profile,config.dataset)
+        baselines_recbole_orchestrator = BaselinesOrchestrator(logger, config_recbole_path,profile,config.dataset)
+        # baselines_custom_orchestrator = BaselinesOrchestrator(logger, config_path,profile,config.dataset)
 
         if os.path.exists(path_train) and os.path.exists(path_test) and os.path.exists(path_validation):
             logger.info("Baselines on clean data")
-            results = baselines_orchestrator.apply(path_train,path_test,clean=True)
-            print(results)
+            baselines_cornac_orchestrator.apply(path_train,path_validation,path_test,clean=True,framework='cornac')
+            #baselines_recbole_orchestrator.apply(path_train,path_validation,path_test,clean=True,framework='recbole')
+            # baselines_custom_orchestrator.apply(path_train,path_validation,path_test,clean=True,framework='custom')
         if os.path.exists(path_train_noisy) and os.path.exists(path_test) and os.path.exists(path_validation):
             logger.info("Baselines on noisy data")
-            results = baselines_orchestrator.apply(path_train_noisy, path_test)
-            print(results)
+            baselines_cornac_orchestrator.apply(path_train,path_validation,path_test,clean=False,framework='cornac')
+            #baselines_recbole_orchestrator.apply(path_train,path_validation,path_test,clean=False,framework='recbole')
+            #baselines_custom_orchestrator.apply(path_train,path_validation,path_test,clean=False,framework='custom')
         elif os.path.exists(path_train_noisy) and os.path.exists(path_test_noisy) and os.path.exists(path_validation_noisy):
             logger.info("Baselines on noisy data")
-            results = baselines_orchestrator.apply(path_train_noisy, path_test_noisy)
-            print(results)
+            baselines_cornac_orchestrator.apply(path_train,path_validation,path_test,clean=False,framework='cornac')
+            #baselines_recbole_orchestrator.apply(path_train,path_validation,path_test,clean=False,framework='recbole')
+            #baselines_custom_orchestrator.apply(path_train,path_validation,path_test,clean=False,framework='custom')
         else:
             raise ValueError("The train.csv and test.csv are mandatory in baselines mode. Please, set a split parameter in the config/config_base.yaml file")
     # 3. Create orchestrator e applica rumore
