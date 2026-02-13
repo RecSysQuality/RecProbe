@@ -26,7 +26,7 @@ To simply enter the container shell:
 docker run --rm  -ti --gpus '"device=1"' --name recprobe-container -v /src/data/:/code/src/ recprobe:latest 
 ```
 If you want to run the container with no gpu, just avoid the ```--gpus``` parameter.
-# From source (for development)
+## From source (for development)
 If you want to provide custom methods and implementations, it is recommended to have the entire project. 
 
 ```
