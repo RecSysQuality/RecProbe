@@ -6,10 +6,10 @@ RecProbe is currently under review as a resource paper at SIGIR 2026.
 
 **RecProbe**, is a resource designed to evaluate robustness by generating controlled perturbations of ratings, reviews, and their combinations. RecProbe features a flexible perturbation module along with a comprehensive evaluation pipeline that compares baseline models on both clean and perturbed datasets, allowing for systematic analysis of noise effects. 
 
-# Outline
+# :bookmark: Outline
 
 
-# :question: Before starting 
+# :airplane: Before starting 
 ## What is RecProbe?
 RecProbe is a framework designed to systematically perturb user–item interaction datasets and evaluate how recommender systems behave under realistic noise conditions.
 RecProbe provides three level of noise injections, all configurable with dedicated YAML files.
