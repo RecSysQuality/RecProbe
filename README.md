@@ -7,9 +7,27 @@ RecProbe, is a resource designed to evaluate robustness by generating controlled
 
 RecProbe is currently under review as a resource paper at SIGIR 2026.
 
+
 # Project structure
 
 # Before starting
+![RecProbe](pipeline.png)
+
+**Setup and configuration.**
+**Data processing.**
+**Noise injection.**
+**Evaluation.**
+
+# RecProbe Configuration
+## Input and Output
+
+
+## YAML Configuration
+### Base
+### Injections
+### Evaluation
+
+
 # Installation
 ## From Docker
 RecProbe is distributed as a docker image in order to provide easy deployment independently of the host operative system and infrastructure. 
@@ -51,4 +69,6 @@ source venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
+
+# Customization
 
