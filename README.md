@@ -7,6 +7,9 @@ RecProbe, is a resource designed to evaluate robustness by generating controlled
 
 RecProbe is currently under review as a resource paper at SIGIR 2026.
 
+# Project structure
+
+# Before starting
 # Installation
 ## From Docker
 RecProbe is distributed as a docker image in order to provide easy deployment independently of the host operative system and infrastructure. 
@@ -14,6 +17,15 @@ RecProbe is distributed as a docker image in order to provide easy deployment in
 First, it is required to build the docker image:
 ```
 docker build -t recprobe .
+```
+
+### Streamlit user interface
+
+
+### Manual YAML Configuration
+The, run the container and setup manually:
+```
+docker run --rm  -ti --gpus '"device=1"' --name recprobe-container -v /src/data/:/code/src/ recprobe:latest python3 main.py --profile=rating --noise_injection=rating_burst --baselines
 ```
 
 The, run the container:
@@ -26,6 +38,8 @@ To simply enter the container shell:
 docker run --rm  -ti --gpus '"device=1"' --name recprobe-container -v /src/data/:/code/src/ recprobe:latest 
 ```
 If you want to run the container with no gpu, just avoid the ```--gpus``` parameter.
+
+
 ## From source (for development)
 If you want to provide custom methods and implementations, it is recommended to have the entire project. 
 
