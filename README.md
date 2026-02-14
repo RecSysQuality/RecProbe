@@ -57,6 +57,15 @@ If the dataset is yelp or a subset of amazon reviews 23, RecProble already provi
 If the custom dataset contains these fields but with a different name, provide a mapping in the file ```src/data_model/reviewModel.py```.
 The output is a dataset in JSONL, JSON, or CSV formats. In addition, if the baselines are computed, RecProbe provides a unified table of comparison of performances.
 
+### YAML Configuration
+
+RecProbe requires at least two YAML configuration files: a base configuration file and a noise injection configuration file. 
+
+The base file, located at `src/config/files/config_base.yaml`, defines the general pipeline setup, including data processing options as well as input and output formats. 
+
+In addition, users must configure one of the noise injection YAML files located in `src/config/files/`, depending on the desired injection level (rating, review, or hybrid). Each file contains the parameters for the corresponding injection strategies. 
+
+For example, to apply the *rating burst* strategy, the user should first configure `config_base.yaml`, and then edit `config_rating.yaml` by specifying the injection budget and the parameters under the `rating_burst` section. Other injection strategies can remain unconfigured.
 
 # Installation
 ## From Docker
