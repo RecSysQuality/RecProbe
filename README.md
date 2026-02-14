@@ -59,6 +59,9 @@ The output is a dataset in JSONL, JSON, or CSV formats. In addition, if the base
 
 ### YAML Configuration
 
+:warning: *Read this section to configure YAML manually. If you plan to use the user inteface, jump to [Installation](#installation)* :warning:
+YAML configuration is recommended to have full control of the pipeline.
+
 RecProbe requires at least two YAML configuration files: a base configuration file and a noise injection configuration file. 
 
 The base file, located at `src/config/files/config_base.yaml`, defines the general pipeline setup, including data processing options as well as input and output formats. 
@@ -88,15 +91,13 @@ docker build -t recprobe .
 ```
 
 ### Streamlit user interface
-
+If you want to use the user inteface to configure RecProbe and inject noise:
+```
+docker run --rm  -ti --gpus '"device=1"' --name recprobe-container -v /src/data/:/code/src/ recprobe:latest python3 streamlit/str.py 
+```
 
 ### Manual YAML Configuration
-The, run the container and setup manually:
-```
-docker run --rm  -ti --gpus '"device=1"' --name recprobe-container -v /src/data/:/code/src/ recprobe:latest python3 main.py --profile=rating --noise_injection=rating_burst --baselines
-```
-
-The, run the container:
+If you configured your YAML manually, run the container:
 ```
 docker run --rm  -ti --gpus '"device=1"' --name recprobe-container -v /src/data/:/code/src/ recprobe:latest python3 main.py --profile=rating --noise_injection=rating_burst --baselines
 ```
