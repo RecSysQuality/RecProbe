@@ -11,7 +11,7 @@ RecProbe is currently under review as a resource paper at SIGIR 2026.
 4. [Configuration](#recprobe-configuration)
 5. [Installation](#installation)
 6. [Usage](#usage)
-7. [Customization](#customization)
+
 
 
 # :airplane: Before starting 
@@ -121,5 +121,5 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-# Customization
+
 
