@@ -63,9 +63,20 @@ RecProbe requires at least two YAML configuration files: a base configuration fi
 
 The base file, located at `src/config/files/config_base.yaml`, defines the general pipeline setup, including data processing options as well as input and output formats. 
 
-In addition, users must configure one of the noise injection YAML files located in `src/config/files/`, depending on the desired injection level (rating, review, or hybrid). Each file contains the parameters for the corresponding injection strategies. 
+In addition, users must configure one of the noise injection YAML files located in `src/config/files/<injection_level>`, depending on the desired injection level (rating, review, or hybrid). Each folder contains one YAML file for each injection strategy; the user has to select the YAML file corresponding to the injection strategy they wnat to apply and configure the parameters for the corresponding injection strategy. 
 
-For example, to apply the *rating burst* strategy, the user should first configure `config_base.yaml`, and then edit `config_rating.yaml` by specifying the injection budget and the parameters under the `rating_burst` section. Other injection strategies can remain unconfigured.
+For example, to apply the *rating burst* strategy, the user should first configure `config_base.yaml`, and then edit `rating/rating_burst.yaml` by specifying the injection budget and the parameters under the `rating_burst` section. 
+
+### Evaluation
+The evaluation module enables users to compare the performance of a set of baseline models (selected by the user) on the dataset before and after the perturbation.
+- **Custom evaluation**. Users can assess the perturbed and original datasets using custom baseline models and evaluation metrics (see Section [Customization](#customization)).
+Perfetto 👍 ti scrivo le due voci nello stesso stile coerente con quella di *Custom evaluation*, pronte da copiare nel README:
+
+- **Cornac evaluation**. Users can evaluate baseline models implemented in Cornac by specifying the desired methods and evaluation metrics directly in the corresponding YAML configuration file. Each baseline can be configured by setting its parameters and selecting the metrics to compute.
+
+- **RecBole evaluation**. Users can evaluate models supported by RecBole by defining the methods, hyperparameters, and evaluation metrics within the dedicated YAML configuration files. The framework automatically loads the specified configurations and performs the evaluation accordingly.
+
+
 
 # Installation
 ## From Docker
