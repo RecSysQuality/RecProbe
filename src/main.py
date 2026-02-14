@@ -58,28 +58,28 @@ def main():
 
     parser.add_argument(
         "--noise_injection",
-        default="user_burst_noise",
+        default="rating_burst",
         help='Noise injection (called "context" in the config files)',
     )
 
     args = parser.parse_args()
 
     rating_options = {
-        "realistic_noise",
-        "user_burst_noise",
-        "item_burst_noise",
+        "random_inconsistencies",
+        "rating_burst",
         "timestamp_corruption",
     }
 
     review_options = {
-        "remove_reviews",
-        "review_burst_noise",
+        "random_inconsistencies",
+        "review_burst",
         "sentence_noise",
     }
 
     combined_options = {
-        "rating_review_burst",
+        "hybrid_burst",
         "semantic_drift",
+        "random_inconsistencies"
     }
 
     profile = args.profile

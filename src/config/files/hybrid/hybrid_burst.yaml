@@ -1,10 +1,9 @@
-context: rating_review_burst
 budget: 1000        # total number of reviews to add/remove/corrupt
 avoid_duplicates: true    # evita duplicati (stesso user-item pair) se true
 
 
 # context 1 -- change the review or the rating
-rating_review_burst:
+hybrid_burst:
   operation: corrupt
   target: item                       # item | user
   modify: rating                    # rating | review. If rating, where the review is positive and the rating is positive, the rating is turned negative -- i.e., from 5 to 1. If review, for a positive rating, we turn the review negative
@@ -21,19 +20,3 @@ rating_review_burst:
     max_rating: 5
     sampling_strategy: gaussian      # gaussian | uniform
 
-# context 1 -- change the review or the rating
-semantic_drift:
-  operation: corrupt
-  target: item                       # item | user
-  selection_strategy: uniform        # uniform | top | least
-  max_reviews_per_node: 50           # max number of reviews modified per node
-  min_reviews_per_node: 1            # min number of reviews modified per node
-  min_length_of_review: 10            # min number of tokens single space separated
-  model: Qwen/Qwen2.5-1.5B-Instruct
-  temporal_interval:
-    start_timestamp: 1009459200     # start of interval (UNIX)
-    end_timestamp: 1640995200       # end of interval (UNIX)
-  rating_behavior:                  # rating of the added reviews
-    min_rating: 1
-    max_rating: 5
-    sampling_strategy: gaussian      # gaussian | uniform

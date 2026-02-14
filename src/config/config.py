@@ -80,13 +80,13 @@ def load_config(
         noise_profile = cfg_dict.get("noise_profile", profile)
 
     if noise_profile == "rating":
-        path_noise = f"{BASE_DIR}/files/config_rating.yaml"
+        path_noise = f"{BASE_DIR}/files/rating/{context}.yaml"
         noise_config = load_rating_config(path_noise)
     elif noise_profile == "review":
-        path_noise = f"{BASE_DIR}/files/config_review.yaml"
+        path_noise = f"{BASE_DIR}/files/reviews/{context}.yaml"
         noise_config = load_review_config(path_noise)
     elif noise_profile == "hybrid":
-        path_noise = f"{BASE_DIR}/files/config_hybrid.yaml"
+        path_noise = f"{BASE_DIR}/files/hybrid/{context}.yaml"
         noise_config = load_hybrid_config(path_noise)
     else:
         raise ValueError(f"Unknown noise_profile: {noise_profile}")

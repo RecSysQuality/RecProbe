@@ -1,0 +1,21 @@
+budget: 10000        # total number of reviews to add/remove/corrupt
+avoid_duplicates: true    # evita duplicati (stesso user-item pair) se true
+# context 3 -- add sentence noise/shuffle text to reviews
+semantic_noise:
+  operation: corrupt
+  target: item                       # user | item
+  intensity: low                    # low | medium | high
+  selection_strategy: uniform        # uniform | top | least
+  max_reviews_per_node: 50           # max number of reviews removed per node
+  min_reviews_per_node: 1            # min number of reviews removed per node
+  min_length_of_review: 10            # min number of tokens single space separated
+  noise_type: token_noise                 # shuffle | token_noise | sentence_noise- shuffle words, add random words, add random sentences
+  model: Qwen/Qwen2.5-1.5B-Instruct # TinyLlama/TinyLlama-1.1B-Chat-v1.0
+  temporal_interval:
+    start_timestamp: 1609459200      # start of temporal interval (inclusive) in UNIX timestamp format
+    end_timestamp: 1640995200
+  #vocabulary_file: "config/files/vocabulary.json"  # required if noise_type is token_noise or sentence_noise # todo add support to vocabulary
+  rating_behavior: # rating of the added reviews
+    min_rating: 1
+    max_rating: 5
+    sampling_strategy: gaussian      # gaussian | uniform

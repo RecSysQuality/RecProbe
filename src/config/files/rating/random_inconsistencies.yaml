@@ -1,0 +1,21 @@
+budget: 1000 # budget of ratings to add/remove/corrupt
+avoid_duplicates: true # if true, avoid adding duplicate ratings (same user-item pair) -- true for human-based operations
+
+# context 1 --  add / remove ratings with realistic noise injection
+random_inconsistencies:
+  operation: add                      # add | remove
+  target: item                        # user | item -- if user, add (remove) ratings from selected users to random items; if item, add (remove) ratings to selected items from random users;
+  selection_strategy: uniform         # uniform | top | least  -- top (least) means focusing on most (least) active users or popular items
+#  k: 100                              # maximum nodes to add/remove ratings from given the allocated budget
+  # how many ratings to add/remove per node (user/item)
+  preserve_degree_distribution: true # preserve original user/item degree distribution and avoid intentional hubs
+  max_ratings_per_node: 100            # .inf means no limit
+  min_ratings_per_node: 10             # min ratings added per node
+  rating_behavior:
+    min_rating: 1
+    max_rating: 5
+    sampling_strategy: gaussian  # gaussian | uniform
+  temporal_interval:
+    start_timestamp: 1009459200      # start of temporal interval (inclusive) in UNIX timestamp format in seconds
+    end_timestamp: 1798761600
+
