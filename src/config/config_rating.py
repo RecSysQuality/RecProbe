@@ -63,7 +63,7 @@ class UserBurstNoiseConfig:
     max_ratings_per_node: float = float("inf")
     min_ratings_per_node: float = 1
     rating_behavior: RatingBehaviorConfig = field(default_factory=RatingBehaviorConfig)
-    temporal_interval: TemporalIntervalConfig = field(default_factory=TemporalIntervalConfig)
+    temporal_behavior: TemporalIntervalConfig = field(default_factory=TemporalIntervalConfig)
 
 
 @dataclass
@@ -76,7 +76,7 @@ class RealisticNoiseConfig:
     max_ratings_per_node: float = float("inf")
     min_ratings_per_node: float = 1
     rating_behavior: RatingBehaviorConfig = field(default_factory=RatingBehaviorConfig)
-    temporal_interval: TemporalIntervalConfig = field(default_factory=TemporalIntervalConfig)
+    temporal_behavior: TemporalIntervalConfig = field(default_factory=TemporalIntervalConfig)
 
 # =========================
 # Item Burst Noise
@@ -90,7 +90,7 @@ class ItemBurstNoiseConfig:
     max_ratings_per_node: float = float("inf")
     min_ratings_per_node: float = 1
     rating_behavior: RatingBehaviorConfig = field(default_factory=RatingBehaviorConfig)
-    temporal_interval: TemporalIntervalConfig = field(default_factory=TemporalIntervalConfig)
+    temporal_behavior: TemporalIntervalConfig = field(default_factory=TemporalIntervalConfig)
 
 # =========================
 # Timestamp corruption config
@@ -111,21 +111,21 @@ class TimestampCorruptionConfig:
 # =========================
 @dataclass
 class RatingConfig:
-    context: str = "realistic_noise"   # realistic_noise | user_burst_noise | item_burst_noise | timestamp_corruption
+    context: str = "random_inconsistencies"   # realistic_noise | user_burst_noise | item_burst_noise | timestamp_corruption
     budget: int = 5000
     avoid_duplicates: bool = True
 
-    realistic_noise: Optional[RealisticNoiseConfig] = None
+    random_inconsistencies: Optional[RealisticNoiseConfig] = None
     rating_burst: Optional[UserBurstNoiseConfig] = None
     timestamp_corruption: Optional[TimestampCorruptionConfig] = None
 
 # =========================
 # Loader YAML
 # =========================
-def load_rating_config(path: str = "files/config_rating.yaml",streamlit: bool = False) -> RatingConfig:
+def load_rating_config(path: str = "files/config_rating.yaml",context: str = 'random_inconsistencies',streamlit: bool = False) -> RatingConfig:
     with open(path, "r") as f:
         cfg_dict = yaml.safe_load(f)
-
+        cfg_dict['context'] = context
     if streamlit:
         # Trova l'indice di noise_profile nell'ordine originale
         keys = list(cfg_dict.keys())
@@ -146,6 +146,6 @@ def load_rating_config(path: str = "files/config_rating.yaml",streamlit: bool = 
 # =========================
 # Test
 # =========================
-if __name__ == "__main__":
-    rating_cfg = load_rating_config("files/config_rating.yaml")
-    print(rating_cfg)
+# if __name__ == "__main__":
+#     rating_cfg = load_rating_config("files/config_rating.yaml")
+#     print(rating_cfg)

@@ -1,13 +1,11 @@
-
 budget: 1000 # budget of ratings to add/remove/corrupt
 avoid_duplicates: true # if true, avoid adding duplicate ratings (same user-item pair) -- true for human-based operations
 
-# context 4 --
 timestamp_corruption:
   target: user                        # user | item  -- if user, corrupt timestamps of ratings from selected users; if item, corrupt timestamps of ratings to selected items;
   selection_strategy: uniform           # uniform | top | least -- random selection of edges
-  max_ratings_per_node: 40            # inf means no limit
-  min_ratings_per_node: 20             # min ratings added per node
+  max_ratings_per_node: 20            # inf means no limit
+  min_ratings_per_node: 10             # min ratings added per node
   temporal_behavior:
     corruption_mode: uniform    # uniform | forward | backward
     intensity: medium                 # low | medium | high -- low = days, medium = months, high = years

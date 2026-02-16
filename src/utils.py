@@ -18,6 +18,9 @@ def parse_timestamp(ts):
     if isinstance(ts, str):
         return pd.to_datetime(ts, errors="raise")
 
+    if isinstance(ts, pd.Timestamp):
+        return ts
+
     # se è numerico
     ts = int(ts)
 

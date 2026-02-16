@@ -58,7 +58,7 @@ def main():
 
     parser.add_argument(
         "--noise_injection",
-        default="rating_burst",
+        default="random_inconsistencies",
         help='Noise injection (called "context" in the config files)',
     )
 

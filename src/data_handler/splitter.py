@@ -31,8 +31,9 @@ def split_dataset_total(df: pd.DataFrame, training: float = 0.8, validation: flo
     elif strategy == 'temporal leave-one-out':
         train_df, validation_df, test_df = temporal_leave_one_out(df,seed)
     elif strategy == 'random leave-one-out':
-        train_df, validation_df, test_df = random_holdout(df,training,validation,test,seed)
-
+        train_df, validation_df, test_df = random_leave_one_out_per_user(df,seed)
+    else:
+        return ValueError("strategy unknown")
     return  train_df, validation_df, test_df
 
 
@@ -80,6 +81,8 @@ def random_holdout(df: pd.DataFrame, training: float = 0.8, validation: float = 
     train_df = df[:n_train]
     validation_df = df[n_train:n_train + n_validation]
     test_df = df[-n_test:]
+    #assert len(train_df) + len(validation_df) + len(test_df) == len(df)
+
     # Shuffle finale
     train_df = shuffle(train_df, random_state=seed).reset_index(drop=True)
     validation_df = shuffle(validation_df, random_state=seed).reset_index(drop=True)

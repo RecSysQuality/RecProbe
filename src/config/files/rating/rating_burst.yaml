@@ -12,7 +12,7 @@ rating_burst:
     min_rating: 1
     max_rating: 5
     sampling_strategy: gaussian  # gaussian | uniform
-  temporal_interval:
+  temporal_behavior:
     start_timestamp: 1009459200      # start of temporal interval (inclusive) in UNIX timestamp format
     end_timestamp: 1798761600        # end of temporal interval (inclusive) in UNIX timestamp format
 

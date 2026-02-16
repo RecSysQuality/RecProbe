@@ -27,10 +27,10 @@ class DatasetLoader:
         self.logger = logger
 
     def load_data(self):
-        path_train = f"{BASE_DIR}/data/output/{self.config.dataset}/train.csv"
-        path_validation = f"{BASE_DIR}/data/output/{self.config.dataset}/validation.csv"
-        path_test = f"{BASE_DIR}/data/output/{self.config.dataset}/test.csv"
-        if not os.path.exists(path_train):
+        # path_train = f"{BASE_DIR}/data/output/{self.config.dataset}/train.csv"
+        # path_validation = f"{BASE_DIR}/data/output/{self.config.dataset}/validation.csv"
+        # path_test = f"{BASE_DIR}/data/output/{self.config.dataset}/test.csv"
+        #if not os.path.exists(path_train):
             if self.config.input.reviews['format'] == 'jsonl':
                 df = self.load_jsonl(
                     f"{BASE_DIR}/data/input/{self.config.dataset}/{self.config.input.reviews['file_name']}.{self.config.input.reviews['format']}")
@@ -45,14 +45,14 @@ class DatasetLoader:
             df = self.extract_kcore(df)
             df = self.filter_by_rating_review(df)
             df,df_val,df_test = self.save_csv(df=df,modified=pd.DataFrame(),clean=True)
-        else:
-            df = pd.read_csv(path_train)
-            df_val = pd.read_csv(path_validation)
-            df_test = pd.read_csv(path_test)
-            if self.config.split.noise_in_test:
-                df = pd.concat([df,df_val,df_test])
+        # else:
+        #     df = pd.read_csv(path_train)
+        #     df_val = pd.read_csv(path_validation)
+        #     df_test = pd.read_csv(path_test)
+        #     if self.config.split.noise_in_test:
+        #         df = pd.concat([df,df_val,df_test]),None,None
 
-        return df,df_val,df_test
+            return df,df_val,df_test
 
     def save_csv(self, df: pd.DataFrame, modified: pd.DataFrame,clean=True):
         """Salva un DataFrame in CSV"""
@@ -85,9 +85,6 @@ class DatasetLoader:
             self.logger.info(f"Saving clean test DataFrame to CSV at {path_test}")
             self.logger.info(f"Saving clean validation DataFrame to CSV at {path_validation}")
             train,validation,test = split_dataset_total(df,self.config.split.training, self.config.split.validation, self.config.split.test, self.config.split.strategy,self.config.split.noise_in_test, self.config.random_seed)
-            train.to_csv(path_train, index=False, sep=separator)
-            test.to_csv(path_test, index=False, sep=separator)
-            validation.to_csv(path_validation, index=False, sep=separator)
             self.logger.info(f"Train set with {len(train)} rows")
             self._log_split(train)
             self.logger.info(f"Test set with {len(test)} rows")
@@ -97,10 +94,51 @@ class DatasetLoader:
             self.logger.info(f"Computing stats on clean split data...")
             if self.config.split.noise_in_test:
                 # se voglio sporcare training e validation allora devo ritornare tutto insieme e faccio un altro split dopo
-                return pd.concat([train,validation,test]),None,None
+                # non salvo il risultato intermedio se ho noise in validation e test.
+                return df,None,None
             else:
+                train.to_csv(path_train, index=False, sep=separator)
+                validation.to_csv(path_validation, index=False, sep=separator)
+                test.to_csv(path_test, index=False, sep=separator)
+
+                # save also in the desired format
+                output_format = self.config.output.reviews['format']
+
+                if output_format == 'jsonl':
+                    train.to_json(path_train.replace('.csv', '.jsonl'),
+                                  orient='records',
+                                  lines=True,
+                                  force_ascii=False)
+
+                    validation.to_json(path_validation.replace('.csv', '.jsonl'),
+                                       orient='records',
+                                       lines=True,
+                                       force_ascii=False)
+
+                    test.to_json(path_test.replace('.csv', '.jsonl'),
+                                 orient='records',
+                                 lines=True,
+                                 force_ascii=False)
+
+                elif output_format == 'json':
+                    train.to_json(path_train.replace('.csv', '.json'),
+                                  orient='records',
+                                  indent=2,
+                                  force_ascii=False)
+
+                    validation.to_json(path_validation.replace('.csv', '.json'),
+                                       orient='records',
+                                       indent=2,
+                                       force_ascii=False)
+
+                    test.to_json(path_test.replace('.csv', '.json'),
+                                 orient='records',
+                                 indent=2,
+                                 force_ascii=False)
+
                 # se no torno solo il train
-                return train,validation,test
+                return train, validation, test
+
 
         else:
             # salvo dopo l'injection assicurandomi che quello che è in training non ci sia anche in test in termini di user,item interaction
@@ -115,6 +153,42 @@ class DatasetLoader:
                 train.to_csv(path, index=False, sep=separator)
                 test.to_csv(path_test, index=False, sep=separator)
                 validation.to_csv(path_validation, index=False, sep=separator)
+
+
+                # save also in the desired format
+                output_format = self.config.output.reviews['format']
+
+                if output_format == 'jsonl':
+                    train.to_json(path.replace('.csv', '.jsonl'),
+                                  orient='records',
+                                  lines=True,
+                                  force_ascii=False)
+
+                    validation.to_json(path_validation.replace('.csv', '.jsonl'),
+                                       orient='records',
+                                       lines=True,
+                                       force_ascii=False)
+
+                    test.to_json(path_test.replace('.csv', '.jsonl'),
+                                 orient='records',
+                                 lines=True,
+                                 force_ascii=False)
+
+                elif output_format == 'json':
+                    train.to_json(path.replace('.csv', '.json'),
+                                  orient='records',
+                                  indent=2,
+                                  force_ascii=False)
+
+                    validation.to_json(path_validation.replace('.csv', '.json'),
+                                       orient='records',
+                                       indent=2,
+                                       force_ascii=False)
+
+                    test.to_json(path_test.replace('.csv', '.json'),
+                                 orient='records',
+                                 indent=2,
+                                 force_ascii=False)
                 self._log_split(train)
                 self._log_split(validation)
                 self._log_split(test)
@@ -127,16 +201,35 @@ class DatasetLoader:
                 df['pair'] = list(zip(df['user_id'], df['item_id']))
                 test_pairs = set(zip(test['user_id'], test['item_id']))
                 validation_pairs = set(zip(validation['user_id'], validation['item_id']))
-
-                df = df[
-                    ~((df['noise']) & (df['pair'].isin(test_pairs)) & (df['pair'].isin(validation_pairs)))
-                ].drop(columns='pair')
+                if 'noise' in df:
+                    df = df[
+                        ~((df['noise']) & (df['pair'].isin(test_pairs)) & (df['pair'].isin(validation_pairs)))
+                    ].drop(columns='pair')
                 train = df.copy()
                 self._log_split(train)
                 self._log_split(validation)
                 self._log_split(test)
-                train = train.drop(columns=['noise'])
+                if 'noise' in df.columns:
+                    train = train.drop(columns=['noise'])
                 train.to_csv(path, index=False, sep=separator)
+
+
+                # save also in the desired format
+                output_format = self.config.output.reviews['format']
+
+                if output_format == 'jsonl':
+                    train.to_json(path.replace('.csv', '.jsonl'),
+                                  orient='records',
+                                  lines=True,
+                                  force_ascii=False)
+
+
+                elif output_format == 'json':
+                    train.to_json(path.replace('.csv', '.json'),
+                                  orient='records',
+                                  indent=2,
+                                  force_ascii=False)
+
 
                 return
 

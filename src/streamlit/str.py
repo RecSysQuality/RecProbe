@@ -2,7 +2,7 @@ import streamlit as st
 import os
 import yaml
 from datetime import datetime
-
+from src.main import main
 # --------------------------------------------------
 # Page Setup
 # --------------------------------------------------
@@ -398,11 +398,12 @@ def save_config(config):
     folder = os.path.join("generated_configs", '')
     os.makedirs(folder, exist_ok=True)
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    #timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filepath = os.path.join(folder, f"config.yaml")
 
     with open(filepath, "w") as f:
         yaml.dump(config, f, sort_keys=False)
+
 
     return filepath
 
@@ -410,3 +411,4 @@ if st.button("🛡️ Save Configuration", use_container_width=True):
     path = save_config(config)
     st.success("Configuration saved!")
     st.info(path)
+    main()

@@ -64,7 +64,7 @@ import os
 def load_config(
     path: str = "files/config_base.yaml",
     profile: str = "rating",
-    context: str = "realistic_noise"
+    context: str = "random_inconsistencies"
 ) -> Config:
 
 
@@ -81,7 +81,7 @@ def load_config(
 
     if noise_profile == "rating":
         path_noise = f"{BASE_DIR}/files/rating/{context}.yaml"
-        noise_config = load_rating_config(path_noise)
+        noise_config = load_rating_config(path_noise,context)
     elif noise_profile == "review":
         path_noise = f"{BASE_DIR}/files/reviews/{context}.yaml"
         noise_config = load_review_config(path_noise)
@@ -90,8 +90,8 @@ def load_config(
         noise_config = load_hybrid_config(path_noise)
     else:
         raise ValueError(f"Unknown noise_profile: {noise_profile}")
-    if context:
-        noise_config.context = context
+    #if context:
+    #    noise_config.context = context
 
     return Config(
         input=input_cfg,
