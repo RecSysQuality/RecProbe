@@ -17,7 +17,9 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1
 RUN python -m pip install --upgrade pip
 
 WORKDIR /code/src
+ENV PYTHONPATH=/code
 COPY . /code
+COPY requirements.txt .
 
 # torch 2.10.0 GPU
 RUN pip install --no-cache-dir -r requirements.txt
