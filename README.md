@@ -75,7 +75,6 @@ For example, to apply the *rating burst* strategy, the user should first configu
 ### Evaluation
 The evaluation module enables users to compare the performance of a set of baseline models (selected by the user) on the dataset before and after the perturbation.
 - **Custom evaluation**. Users can assess the perturbed and original datasets using custom baseline models and evaluation metrics (see Section [Customization](#customization)).
-Perfetto 👍 ti scrivo le due voci nello stesso stile coerente con quella di *Custom evaluation*, pronte da copiare nel README:
 
 - **Cornac evaluation**. Users can evaluate baseline models implemented in Cornac by specifying the desired methods and evaluation metrics directly in the corresponding YAML configuration file. Each baseline can be configured by setting its parameters and selecting the metrics to compute.
 
