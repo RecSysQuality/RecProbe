@@ -31,11 +31,12 @@ class HybridNoiseInjector(BaseNoiseInjector):
     def apply_noise(self, df, df_val,df_test):
         df = df[['user_id', 'item_id', 'rating', 'review_text', 'title', 'timestamp']].copy()
         ctx = self.config.context
-        if ctx == "rating_review_burst":
+        if ctx == "hybrid_burst":
             return self._corrupt(df)
         if ctx == "semantic_drift":
             return self._drift(df)
-
+        if ctx == "random_inconsistencies":
+            return self._drift(df)
 
         raise ValueError(f"Unknown rating noise context: {ctx}")
     # ==========================================================
@@ -46,18 +47,18 @@ class HybridNoiseInjector(BaseNoiseInjector):
         noise_config = self.config.semantic_drift
         target = 'user_id' if noise_config.target == 'user' else 'item_id'
         other = 'item_id' if target == 'user_id' else 'user_id'
-        nodes = ordered_nodes(df, target, noise_config.selection_strategy)
         df = sample_reviews(df, noise_config)
+        nodes = ordered_nodes(df, target, noise_config.selection_strategy)
         return self._semantic_drift(df, nodes, target, other, config,noise_config)
 
 
     def _corrupt(self, df):
         config = self.config
-        noise_config = self.config.rating_review_burst
+        noise_config = self.config.hybrid_burst
         target = 'user_id' if noise_config.target == 'user' else 'item_id'
         other = 'item_id' if target == 'user_id' else 'user_id'
-        nodes = ordered_nodes(df, target, noise_config.selection_strategy)
         df = sample_reviews(df, noise_config)
+        nodes = ordered_nodes(df, target, noise_config.selection_strategy)
         if noise_config.modify == 'rating':
             return self._corrupt_ratings(df, nodes, target, other, config,noise_config)
         else:
@@ -69,8 +70,8 @@ class HybridNoiseInjector(BaseNoiseInjector):
         remaining = self.budget
 
         df['noise'] = False
-        start_ts = parse_timestamp(noise_config.temporal_interval.start_timestamp)
-        end_ts = parse_timestamp(noise_config.temporal_interval.end_timestamp)
+        start_ts = parse_timestamp(noise_config.temporal_behavior.start_timestamp)
+        end_ts = parse_timestamp(noise_config.temporal_behavior.end_timestamp)
 
 
         review_to_convert, title_to_convert = [], []
@@ -89,12 +90,11 @@ class HybridNoiseInjector(BaseNoiseInjector):
                 node_df['rating'].isin(ratings)
             ]
 
-            # if start_ts != 0 and end_ts != 0:
-            #     candidates = node_df[
-            #         node_df['rating'].isin(ratings) &  # rating desiderati
-            #         (node_df['timestamp'] >= start_ts) &  # timestamp >= start
-            #         (node_df['timestamp'] <= end_ts)  # timestamp <= end
-            #         ]
+            if start_ts != 0 and end_ts != 0:
+                candidates = node_df[
+                    (node_df['timestamp'] >= start_ts) &  # timestamp >= start
+                    (node_df['timestamp'] <= end_ts)  # timestamp <= end
+                    ]
 
             if candidates.empty:
                 continue
@@ -130,8 +130,8 @@ class HybridNoiseInjector(BaseNoiseInjector):
         remaining = self.budget
 
         df['noise'] = False
-        start_ts = noise_config.temporal_interval.start_timestamp
-        end_ts = noise_config.temporal_interval.end_timestamp
+        start_ts = noise_config.temporal_behavior.start_timestamp
+        end_ts = noise_config.temporal_behavior.end_timestamp
         start_ts = parse_timestamp(start_ts)
         end_ts = parse_timestamp(end_ts)
 
@@ -151,12 +151,12 @@ class HybridNoiseInjector(BaseNoiseInjector):
                 node_df['rating'].isin(ratings)
             ]
 
-            # if start_ts != 0 and end_ts != 0:
-            #     candidates = node_df[
-            #         node_df['rating'].isin(ratings) &  # rating desiderati
-            #         (node_df['timestamp'] >= start_ts) &  # timestamp >= start
-            #         (node_df['timestamp'] <= end_ts)  # timestamp <= end
-            #         ]
+            if start_ts != 0 and end_ts != 0:
+                candidates = node_df[
+                    node_df['rating'].isin(ratings) &  # rating desiderati
+                    (node_df['timestamp'] >= start_ts) &  # timestamp >= start
+                    (node_df['timestamp'] <= end_ts)  # timestamp <= end
+                    ]
 
             if candidates.empty:
                 continue
@@ -167,7 +167,7 @@ class HybridNoiseInjector(BaseNoiseInjector):
 
 
             # Trasformiamo in batch
-            new_review_texts,new_titles = self._invert_sentiment(config,noise_config)
+            new_review_texts,new_titles = self._invert_sentiment(sampled,noise_config,self.device)
            # new_titles = self._invert_sentiment( config,noise_config)
 
             # Scriviamo in blocco nel DataFrame
@@ -187,8 +187,8 @@ class HybridNoiseInjector(BaseNoiseInjector):
         remaining = self.budget
 
         df['noise'] = False
-        start_ts = noise_config.temporal_interval.start_timestamp
-        end_ts = noise_config.temporal_interval.end_timestamp
+        start_ts = noise_config.temporal_behavior.start_timestamp
+        end_ts = noise_config.temporal_behavior.end_timestamp
         start_ts = parse_timestamp(start_ts)
         end_ts = parse_timestamp(end_ts)
 
@@ -228,30 +228,34 @@ class HybridNoiseInjector(BaseNoiseInjector):
             review_to_convert.extend(review_texts)
             title_to_convert.extend(title_text)
 
-        generator = pipeline(
-            "text-generation",
-            model=noise_config.model,
-            device=-1,  # CPU
-            torch_dtype="auto"
-        )
 
         text_list = review_to_convert + title_to_convert
-        new_reviews, new_titles = self._change_context(generator,text_list,len(review_to_convert))
-        df.loc[mod_idx.index, 'review_text'] = new_reviews
-        df.loc[mod_idx.index, 'title'] = new_titles
+        new_reviews, new_titles = self._change_context(noise_config,text_list,len(review_to_convert),self.device)
+        #new_reviews, new_titles = ['a','b'],['a','b']
+        df.loc[mod_idx, 'review_text'] = new_reviews
+        df.loc[mod_idx, 'title'] = new_titles
         df['noise'] = False
-        df.loc[mod_idx.index, 'noise'] = True
+        df.loc[mod_idx, 'noise'] = True
         mod = df.loc[mod_idx]
         return df, mod
 
 
     @staticmethod
-    def _change_context(generator,text_list,mid):
+    def _change_context(noise_config,text_list,mid,device):
+        generator = pipeline(
+            "text-generation",
+            model=noise_config.model,
+            device=device,  # CPU
+            torch_dtype="auto"
+        )
 
 
-        prompts = [f"Rewrite the sentence by:\n- keeping the same product\n- keeping the same sentiment\n- changing the context completely\n- avoiding references to the original context\n-- return only the revised text without any explanation\nSentence: {s} \nReturned sentence: "
+        prompts = [f"Rewrite the sentence by:\n- keeping the same product\n- keeping the same sentiment\n- changing the context completely\n- avoiding references to the original context\n-- return only the revised text without any explanation\nSentence: {s} \nReturned sentence:"
          for s in text_list]
-
+        # prompts = [
+        #     f"Rewrite the sentence keeping the product and sentiment but changing the context. Return only the new sentence:\n{s}"
+        #     for s in text_list
+        # ]
         outp = generator(
             prompts,
             batch_size=128,
@@ -259,12 +263,13 @@ class HybridNoiseInjector(BaseNoiseInjector):
             do_sample=True,
             temperature=0.8
         )
-        outputs = [out["generated_text"].split('Returned sentence: \n')[-1].split('\n')[0].replace('"', '') for out in outp]
-
+        print(outp)
+        outputs = [out[0]['generated_text'].split(prompts[i])[1] for i,out in enumerate(outp)]
+        print(outputs)
         return outputs[0:mid],outputs[mid:]
 
     @staticmethod
-    def _invert_sentiment(df,noise_config):
+    def _invert_sentiment(df,noise_config,device):
 
         # Prepariamo batch di testi da trasformare
         review_texts = []
@@ -296,7 +301,7 @@ class HybridNoiseInjector(BaseNoiseInjector):
 
 
         # Funzione di batch processing
-        generator = pipeline("text2text-generation", model=noise_config.model, device=0)
+        generator = pipeline("text-generation", model=noise_config.model, device=device)
 
         outputs = []
 
@@ -311,7 +316,7 @@ class HybridNoiseInjector(BaseNoiseInjector):
         )
 
         #outputs.extend([r['generated_text'] for r in res])
-        outputs.extend([out["generated_text"].split('Returned sentence: \n')[-1].split('\n')[0].replace('"', '') for out in res])
+        outputs.extend([out[0]["generated_text"].split('Returned sentence: \n')[-1].split('\n')[0].replace('"', '') for out in res])
 
         # reinseriamo None dove non abbiamo trasformazioni
         full_output = []
@@ -333,7 +338,7 @@ class HybridNoiseInjector(BaseNoiseInjector):
             )
 
             #outputs.extend([r['generated_text'] for r in res])
-            outputs.extend([out["generated_text"].split('Returned sentence: \n')[-1].split('\n')[0].replace('"', '') for out in res])
+            outputs.extend([out[0]["generated_text"].split('Returned sentence: \n')[-1].split('\n')[0].replace('"', '') for out in res])
 
             # reinseriamo None dove non abbiamo trasformazioni
             full_output = []

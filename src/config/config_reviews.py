@@ -32,15 +32,17 @@ class TemporalIntervalConfig:
     end_timestamp: int = 1640995200              # low | medium | high
 
 @dataclass
-class RemoveRevNoiseConfig:
+class RealisticNoiseConfig:
     target: str = "user"                # user | item | NA
     selection_strategy: str = "uniform" # uniform | popularity_based
     operation: str = "remove"           # remove | add
+    preserve_degree_distribution: bool = True
     max_reviews_per_node: float = float("inf")
     min_reviews_per_node: float = 1
     min_length_of_review: float = 10
-    temporal_interval: TemporalIntervalConfig = field(default_factory=TemporalIntervalConfig)
+    temporal_behavior: TemporalIntervalConfig = field(default_factory=TemporalIntervalConfig)
     rating_behavior: RatingBehaviorConfig = field(default_factory=RatingBehaviorConfig)
+    near_duplicates_configuration: NearDuplicatesConfig = field(default_factory=NearDuplicatesConfig)
 
 # =========================
 # Item Burst Noise
@@ -54,7 +56,7 @@ class ReviewBurstNoiseConfig:
     max_reviews_per_node: float = float("inf")
     min_reviews_per_node: float = 1
     min_length_of_review: int = 10
-    temporal_interval: TemporalIntervalConfig = field(default_factory=TemporalIntervalConfig)
+    temporal_behavior: TemporalIntervalConfig = field(default_factory=TemporalIntervalConfig)
     near_duplicates_configuration: NearDuplicatesConfig = field(default_factory=NearDuplicatesConfig)
 
 # =========================
@@ -73,7 +75,7 @@ class SentecneNoiseConfig:
     noise_type: str = 'shuffle'
     intensity: str = 'low'
    # vocabulary_file: str = None
-    temporal_interval: TemporalIntervalConfig = field(default_factory=TemporalIntervalConfig)
+    temporal_behavior: TemporalIntervalConfig = field(default_factory=TemporalIntervalConfig)
     rating_behavior: RatingBehaviorConfig = field(default_factory=RatingBehaviorConfig)
 
 # =========================
@@ -81,21 +83,33 @@ class SentecneNoiseConfig:
 # =========================
 @dataclass
 class ReviewConfig:
-    context: str = "realistic_noise"   # realistic_noise | user_burst_noise | item_burst_noise | timestamp_corruption
+    context: str = "random_inconsistencies"   # realistic_noise | user_burst_noise | item_burst_noise | timestamp_corruption
     budget: int = 5000
     avoid_duplicates: bool = True
 
-    remove_reviews: Optional[RemoveRevNoiseConfig] = None
-    review_burst_noise: Optional[ReviewBurstNoiseConfig] = None
+    random_inconsistencies: Optional[RealisticNoiseConfig] = None
+    review_burst: Optional[ReviewBurstNoiseConfig] = None
     sentence_noise: Optional[SentecneNoiseConfig] = None
 
 # =========================
 # Loader YAML
 # =========================
-def load_review_config(path: str = "files/config_review.yaml",streamlit: bool = False) -> ReviewConfig:
+
+def load_review_config(path: str = "files/config_review.yaml",context: str = 'random_inconsistencies',streamlit: bool = False) -> ReviewConfig:
     with open(path, "r") as f:
         cfg_dict = yaml.safe_load(f)
+        cfg_dict['context'] = context
+    if streamlit:
+        # Trova l'indice di noise_profile nell'ordine originale
+        keys = list(cfg_dict.keys())
+        start_index = keys.index("noise_profile")
 
+        # Crea un nuovo dict solo dalla chiave noise_profile in poi
+        filtered_dict = {
+            k: cfg_dict[k] for k in keys[start_index:]
+        }
+
+        cfg_dict = filtered_dict
     if streamlit:
         # Trova l'indice di noise_profile nell'ordine originale
         keys = list(cfg_dict.keys())

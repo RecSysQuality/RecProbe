@@ -1,18 +1,25 @@
-budget: 10000        # total number of reviews to add/remove/corrupt
+budget: 10        # total number of reviews to add/remove/corrupt
 avoid_duplicates: true    # evita duplicati (stesso user-item pair) se true
+preserve_degree_distribution: true
 
 # context 1 -- remove reviews. This does not remove the rating instead, it replaces the review text with an empty string
 random_inconsistencies:
-  operation: remove                 # add | remove
+  operation: add                 # add | remove
   target: item                       # user | item
-  selection_strategy: uniform        # uniform | top | least
-  max_reviews_per_node: 50           # max number of reviews removed per node
+  selection_strategy: top        # uniform | top | least
+  max_reviews_per_node: 5           # max number of reviews removed per node
   min_reviews_per_node: 1            # min number of reviews removed per node
   min_length_of_review: 20            # min number of tokens single space separated
-  temporal_interval:
+  temporal_behavior:
     start_timestamp: 1609459200      # start of temporal interval (inclusive) in UNIX timestamp format
     end_timestamp: 1640995200
   rating_behavior:                  # rating of the added reviews
     min_rating: 1
     max_rating: 5
     sampling_strategy: gaussian      # gaussian | uniform
+  near_duplicates_configuration:
+    model: ramsrigouthamg/t5_paraphraser
+    review:
+    title:
+    rating: 5 # the rating of the reviews to create the near duplicates of
+

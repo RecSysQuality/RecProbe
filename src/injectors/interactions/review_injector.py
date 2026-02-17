@@ -29,9 +29,9 @@ class ReviewNoiseInjector(BaseNoiseInjector):
     def apply_noise(self, df, df_val, df_test):
         df = df[['user_id', 'item_id', 'rating', 'review_text', 'title', 'timestamp']].copy()
         ctx = self.config.context
-        if ctx == "remove_reviews":
-            return self._remove_noise(df)
-        if ctx == "review_burst_noise":
+        if ctx == "random_inconsistencies":
+            return self._realistic_noise(df,df_val, df_test)
+        if ctx == "review_burst":
             return self._burst_noise(df, df_val, df_test)
         if ctx == "sentence_noise":
             return self._sentence_noise(df)
@@ -41,14 +41,22 @@ class ReviewNoiseInjector(BaseNoiseInjector):
     # ==========================================================
     # REMOVE NOISE
     # ==========================================================
-    def _remove_noise(self, df):
+    def _realistic_noise(self, df,df_val,df_test):
         config = self.config
-        noise_config = self.config.remove_reviews
+        noise_config = self.config.random_inconsistencies
         target = 'user_id' if noise_config.target == 'user' else 'item_id'
         other = 'item_id' if target == 'user_id' else 'user_id'
+
         nodes = ordered_nodes(df, target, noise_config.selection_strategy)
-        df = sample_reviews(df, noise_config)
-        return self._remove_reviews(df, nodes, target, other, config, noise_config)
+
+        if noise_config.operation == 'remove':
+            return self._remove_reviews(df,df_val, df_test, nodes, target, other, config, noise_config)
+
+        if noise_config.operation == 'add':
+            return self._add_reviews(df, df_val, df_test, nodes, target, other, config,noise_config)
+
+        raise ValueError(f"Unknown operation: {config.operation}")
+
 
     # ==========================================================
     # BURST NOISE
@@ -58,8 +66,9 @@ class ReviewNoiseInjector(BaseNoiseInjector):
         noise_config = self.config.review_burst_noise
         target = 'user_id' if noise_config.target == 'user' else 'item_id'
         other = 'item_id' if target == 'user_id' else 'user_id'
-        nodes = ordered_nodes(df, target, noise_config.selection_strategy)
         df = sample_reviews(df, noise_config)
+        nodes = ordered_nodes(df, target, noise_config.selection_strategy)
+
         return self._add_reviews(df, df_val, df_test, nodes, target, other, config, noise_config)
 
     # ==========================================================
@@ -71,11 +80,65 @@ class ReviewNoiseInjector(BaseNoiseInjector):
         target = 'user_id' if noise_config.target == 'user' else 'item_id'
         #self.global_vocab = json.load(open(config.vocab_path, 'r'))
         other = 'item_id' if target == 'user_id' else 'user_id'
-        nodes = ordered_nodes(df, target, noise_config.selection_strategy)
         df = sample_reviews(df, noise_config)
+        nodes = ordered_nodes(df, target, noise_config.selection_strategy)
+
         return self._add_sentence_noise(df, nodes, target, other, config, noise_config)
 
-    def _remove_reviews(self, df, nodes, target, other, config, noise_config):
+    def _remove_reviews(self, df, df_val, df_test, nodes, target, other, config, noise_config):
+        removed_idx = []
+        remaining = self.budget
+
+        # Calcolo gradi una sola volta
+        degrees = df.groupby(target)[other].nunique()
+        max_degree = degrees.max()
+        degrees_dict = degrees.to_dict()
+
+        # Timestamp una sola volta
+        start_ts = parse_timestamp(noise_config.temporal_behavior.start_timestamp)
+        end_ts = parse_timestamp(noise_config.temporal_behavior.end_timestamp)
+
+        # Maschera per timestamp, se presente
+        if start_ts != 0 and end_ts != 0:
+            time_mask = (df['timestamp'] >= start_ts) & (df['timestamp'] <= end_ts)
+        else:
+            time_mask = pd.Series(True, index=df.index)
+
+        # Iterazione sui nodi
+        for node in nodes:
+            if remaining <= 0 or node not in degrees_dict:
+                continue
+
+            node_mask = df[target] == node
+            node_df = df[node_mask]
+
+            n = per_node_budget(len(node_df), remaining,
+                                noise_config.min_reviews_per_node,
+                                noise_config.max_reviews_per_node)
+            if n <= 0:
+                continue
+
+            if noise_config.preserve_degree_distribution:
+                factor = (max_degree - degrees_dict.get(node, 0)) / max_degree
+                n = max(1, int(np.ceil(n * factor)))
+
+            # Selezione delle rating candidate
+            ratings = sample_ratings(node_df['rating'], n, noise_config)
+            candidates_mask = node_mask & df['rating'].isin(ratings) & time_mask
+            candidates_idx = df.index[candidates_mask]
+
+            # Campionamento
+            sampled_idx = np.random.choice(
+                candidates_idx, size=min(len(candidates_idx), n), replace=False
+            )
+
+            removed_idx.extend(sampled_idx)
+            remaining -= len(sampled_idx)
+
+        removed = df.loc[removed_idx]
+        return df.drop(removed_idx), removed
+
+    def _remove_reviews1(self, df, nodes, target, other, config, noise_config):
         remaining = self.budget
 
         start_ts = parse_timestamp(noise_config.temporal_interval.start_timestamp)
@@ -142,7 +205,6 @@ class ReviewNoiseInjector(BaseNoiseInjector):
         all_other = df[other].unique()
 
 
-        seed_review, seed_title, seed_rating = '', '', 4
 
         seed_review = noise_config.near_duplicates_configuration.review
         seed_title = noise_config.near_duplicates_configuration.title
@@ -157,8 +219,8 @@ class ReviewNoiseInjector(BaseNoiseInjector):
 
         grouped = df.groupby(target)
 
-        start_ts = parse_timestamp(noise_config.temporal_interval.start_timestamp)
-        end_ts = parse_timestamp(noise_config.temporal_interval.end_timestamp)
+        start_ts = parse_timestamp(noise_config.temporal_behavior.start_timestamp)
+        end_ts = parse_timestamp(noise_config.temporal_behavior.end_timestamp)
 
         for node in nodes:
             if remaining <= 0:
@@ -266,11 +328,11 @@ class ReviewNoiseInjector(BaseNoiseInjector):
         remaining = self.budget
         mod_idx = []
 
-        start_ts = parse_timestamp(noise_config.temporal_interval.start_timestamp)
-        end_ts = parse_timestamp(noise_config.temporal_interval.end_timestamp)
+        start_ts = parse_timestamp(noise_config.temporal_behavior.start_timestamp)
+        end_ts = parse_timestamp(noise_config.temporal_behavior.end_timestamp)
 
         # Prepara pool di parole
-        nltk.download('words', quiet=True)
+        nltk.download('words', quiet=False)
         word_list_all = nltk_words.words()
         random.shuffle(word_list_all)
         pool = [p for p in random.sample(word_list_all, 300) if len(p) > 5]
@@ -320,7 +382,7 @@ class ReviewNoiseInjector(BaseNoiseInjector):
                                     for t in titles]
 
             elif noise_config.noise_type == 'sentence_noise':
-                corrupted_reviews = []
+                corrupted_reviews,corrupted_titles = [],[]
                 for t in review_texts:
                     parts = [p for p in re.split(r'[.!?]', t) if p]
                     new_text = []
@@ -339,7 +401,7 @@ class ReviewNoiseInjector(BaseNoiseInjector):
                     corrupted_titles.append(' '.join(new_text))
                 #corrupted_titles = titles  # mantieni i titoli
             else:
-                corrupted_reviews = []
+                corrupted_reviews,corrupted_titles = [],[]
                 intensity_map = {'low': 7, 'medium': 5, 'high': 2}
                 up = intensity_map.get(noise_config.intensity, 5)
                 for t in review_texts:
@@ -378,10 +440,9 @@ class ReviewNoiseInjector(BaseNoiseInjector):
 
     def _generate_pool(self, depth, noise_config, topics=None):
 
-        generator = pipeline("text-generation", model=noise_config.model, device=0)  # usa GPU se disponibile
+        generator = pipeline("text-generation", model=noise_config.model, device=self.device)  # usa GPU se disponibile
         # Process in batches
-        if self.device == 'cpu':
-            depth = 10
+
         if topics is None:
             topics = [
                 "breakfast", "lunch", "dinner", "snack", "dessert",
@@ -396,12 +457,13 @@ class ReviewNoiseInjector(BaseNoiseInjector):
                 "buttermilk", "smoothie", "granola", "tea-time", "doughnut"
             ]
 
-        num_seq = depth / len(topics)
+        #num_seq = depth / len(topics)
         # with open("../data_handler/prompt_config.json") as f:
         #     config = json.load(f)
 
         batch_prompts = []
-        for topic in topics:
+        random.shuffle(topics)
+        for topic in topics[0:depth]:
             prompt = f"""Write a short sentence of about 15 words about {topic}.
             Returned sentence:
             """
@@ -414,14 +476,14 @@ class ReviewNoiseInjector(BaseNoiseInjector):
             batch_prompts,
             do_sample=True,
             max_new_tokens=50,
-            num_return_sequences=num_seq,
+            num_return_sequences=1,
             temperature=1.0,
             top_k=50,
             top_p=0.95
         )
-        results = [out["generated_text"].split('Returned sentence: \n')[-1].split('\n')[0].replace('"', '') for out in
+        results = [out[0]["generated_text"].split('Returned sentence:')[-1].replace('"', '') for out in
                    res]
-
+        print(results)
         return results
 
     def _paraphrase(self, text, noise_config, num_seq=2):
@@ -442,7 +504,13 @@ class ReviewNoiseInjector(BaseNoiseInjector):
         # prompt_template = config["prompt_paraphrase"]["prompt_text"]
         # prompt = prompt_template.format(text=text)
 
-        encoding = tokenizer.encode_plus(prompt, pad_to_max_length=True, return_tensors="pt")
+        #encoding = tokenizer.encode_plus(prompt, pad_to_max_length=True, return_tensors="pt")
+        encoding = tokenizer(
+            prompt,
+            padding="max_length",  # equivalente a pad_to_max_length=True
+            truncation=True,
+            return_tensors="pt"
+        )
         input_ids, attention_masks = encoding["input_ids"].to(self.device), encoding["attention_mask"].to(self.device)
 
         # set top_k = 50 and set top_p = 0.95 and num_return_sequences = 3

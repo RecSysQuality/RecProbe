@@ -6,7 +6,7 @@ from tokenizers.pre_tokenizers import Split
 
 from .config_rating import RatingConfig, load_rating_config
 from .config_reviews import ReviewConfig, load_review_config
-from .config_combined import RatingReviewConfig, load_hybrid_config
+from .config_hybrid import RatingReviewConfig, load_hybrid_config
 import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -47,7 +47,7 @@ class Config:
     split: SplitConfig
     drop_duplicates: bool = True
     noise_profile: str = "rating"
-    noise_context: str = "realistic_noise"
+    noise_context: str = "random_inconsistences"
     kcore: Optional[int] = 5
     min_rating: Optional[int] = 1
     min_review_length: Optional[int] = 0
@@ -83,11 +83,11 @@ def load_config(
         path_noise = f"{BASE_DIR}/files/rating/{context}.yaml"
         noise_config = load_rating_config(path_noise,context)
     elif noise_profile == "review":
-        path_noise = f"{BASE_DIR}/files/reviews/{context}.yaml"
-        noise_config = load_review_config(path_noise)
+        path_noise = f"{BASE_DIR}/files/review/{context}.yaml"
+        noise_config = load_review_config(path_noise,context)
     elif noise_profile == "hybrid":
         path_noise = f"{BASE_DIR}/files/hybrid/{context}.yaml"
-        noise_config = load_hybrid_config(path_noise)
+        noise_config = load_hybrid_config(path_noise,context)
     else:
         raise ValueError(f"Unknown noise_profile: {noise_profile}")
     #if context:

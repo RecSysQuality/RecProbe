@@ -9,7 +9,7 @@ review_burst:
   max_reviews_per_node: 300           # max number of reviews removed per node
   min_reviews_per_node: 100            # min number of reviews removed per node
   min_length_of_review: 20            # min number of tokens single space separated
-  temporal_interval:
+  temporal_behavior:
     start_timestamp: 1609459200     # start of interval (UNIX)
     end_timestamp: 1640995200       # end of interval (UNIX)
   near_duplicates_configuration:
