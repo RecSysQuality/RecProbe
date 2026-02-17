@@ -56,7 +56,7 @@ If the dataset is yelp or a subset of amazon reviews 23, RecProble already provi
 
 If the custom dataset contains these fields but with a different name, provide a mapping in the file ```src/data_model/reviewModel.py```.
 The output is a dataset in JSONL, JSON, or CSV formats. In addition, if the baselines are computed, RecProbe provides a unified table of comparison of performances.
-The original dataset must be place inside the folder ```src/data/input```; the generated perturbed dataset will be placed inside ```src/data/output```
+The original dataset must be place inside the folder ```src/data/input/<name_of_the_dataset>/```; the generated perturbed dataset will be placed inside ```src/data/output/<name_of_the_dataset>/```. **The ```data``` folder and its subfolders must be created before installing RecProbe. **
 
 ### YAML Configuration
 
@@ -83,6 +83,7 @@ Perfetto 👍 ti scrivo le due voci nello stesso stile coerente con quella di *C
 
 
 # Installation
+Once configured the YAML files and added the datasets in the data folder, follow these steps to install and use RecProbe.
 ## From Docker
 RecProbe is distributed as a docker image in order to provide easy deployment independently of the host operative system and infrastructure. 
 
