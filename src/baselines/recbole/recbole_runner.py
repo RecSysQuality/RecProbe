@@ -40,18 +40,20 @@ class RecBoleExperimentRunner(BaseBaselineRunner):
         self._adapt_for_recbole(validation_data,self.dataset,type="valid")
         self._adapt_for_recbole(test_data,self.dataset,type="test")
         # --- Trova tutti i config YAML nella cartella config ---
-        config_folder = os.path.join(os.getcwd(), "config")
+        config_folder = os.path.join(os.getcwd(), "baselines/recbole/config")
         yaml_files = [os.path.join(config_folder, f) for f in os.listdir(config_folder) if f.endswith(".yaml")]
         parameter_dict = {
             # dataset config
             'benchmark_filename': ['train', 'valid', 'test'],
         }
+        print('RUNNING')
         for yaml_file in yaml_files:
             run_recbole(
                 dataset=self.dataset,
                 config_file_list=[yaml_file],
                 config_dict=parameter_dict
             )
+        print('SAVING')
 
         self._save_results_csv()
 

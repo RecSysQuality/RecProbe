@@ -52,13 +52,13 @@ def main():
     parser.add_argument(
         "--profile",
         choices=["rating", "review", "hybrid",""],
-        default="hybrid",
+        default="rating",
         help="Noise profile",
     )
 
     parser.add_argument(
         "--noise_injection",
-        default="hybrid_burst",
+        default="rating_burst",
         help='Noise injection (called "context" in the config files)',
     )
 
@@ -132,23 +132,34 @@ def main():
         config_recbole_path = f"{BASE_DIR}/baselines/recbole/config/config.yaml"
         config_path = f"{BASE_DIR}/baselines/custom/config/config.yaml"
 
-        baselines_cornac_orchestrator = BaselinesOrchestrator(logger, config_cornac_path,profile,config.dataset)
-        baselines_recbole_orchestrator = BaselinesOrchestrator(logger, config_recbole_path,profile,config.dataset)
-        # baselines_custom_orchestrator = BaselinesOrchestrator(logger, config_path,profile,config.dataset)
+        if config.evaluation == 'cornac':
+            baselines_orchestrator = BaselinesOrchestrator(logger, config_cornac_path,profile,config.dataset,config.evaluation)
+        elif config.evaluation == 'recbole':
+            baselines_orchestrator = BaselinesOrchestrator(logger, config_recbole_path,profile,config.dataset,config.evaluation)
+        elif config.evaluation == 'custom':
+            baselines_orchestrator = BaselinesOrchestrator(logger, config_path,profile,config.dataset,config.evaluation)
+
+
+        #baselines_orchestrator = BaselinesOrchestrator(logger, config_path,profile,config.dataset,config.evaluation)
+
 
         if os.path.exists(path_train) and os.path.exists(path_test) and os.path.exists(path_validation):
             logger.info("Baselines on clean data")
-            baselines_cornac_orchestrator.apply(path_train,path_validation,path_test,clean=True,framework='cornac')
-            #baselines_recbole_orchestrator.apply(path_train,path_validation,path_test,clean=True,framework='recbole')
+            #baselines_cornac_orchestrator.apply(path_train,path_validation,path_test,clean=True,framework='cornac')
+            baselines_orchestrator.apply(path_train,path_validation,path_test,clean=True)
             # baselines_custom_orchestrator.apply(path_train,path_validation,path_test,clean=True,framework='custom')
         if os.path.exists(path_train_noisy) and os.path.exists(path_test) and os.path.exists(path_validation):
             logger.info("Baselines on noisy data")
-            baselines_cornac_orchestrator.apply(path_train,path_validation,path_test,clean=False,framework='cornac')
+            baselines_orchestrator.apply(path_train,path_validation,path_test,clean=False)
+
+            #baselines_cornac_orchestrator.apply(path_train,path_validation,path_test,clean=False,framework='cornac')
             #baselines_recbole_orchestrator.apply(path_train,path_validation,path_test,clean=False,framework='recbole')
             #baselines_custom_orchestrator.apply(path_train,path_validation,path_test,clean=False,framework='custom')
         elif os.path.exists(path_train_noisy) and os.path.exists(path_test_noisy) and os.path.exists(path_validation_noisy):
             logger.info("Baselines on noisy data")
-            baselines_cornac_orchestrator.apply(path_train,path_validation,path_test,clean=False,framework='cornac')
+            baselines_orchestrator.apply(path_train,path_validation,path_test,clean=False)
+
+            #baselines_cornac_orchestrator.apply(path_train,path_validation,path_test,clean=False,framework='cornac')
             #baselines_recbole_orchestrator.apply(path_train,path_validation,path_test,clean=False,framework='recbole')
             #baselines_custom_orchestrator.apply(path_train,path_validation,path_test,clean=False,framework='custom')
         else:
