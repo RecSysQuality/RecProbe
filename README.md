@@ -50,7 +50,7 @@ RecProbe requires in input one file in JSONL, JSON or CSV containing the followi
 - item_id: the id of the rated item
 - rating: the rating given by a user to an item -- it is usually a numerical value
 - review_text: the textual review
-- title: title of the review
+- title: title of the review (optional)
 
 If the dataset is yelp or a subset of amazon reviews 23, RecProble already provides support for them, just add "amazon" in the name of the dataset, for example: *amazon_All_Beauty*.
 
