@@ -1,28 +1,34 @@
-# dataset config : General Recommendation
+# ====== Dataset ======
+data_path: './dataset'
+dataset: 'amazon_All_Beauty'   # verrà sovrascritto dinamicamente se vuoi
+benchmark_filename: ['train', 'tune', 'test']
+save_model: False
+checkpoint_dir: None
+load_best_model_at_end: False
+load_checkpoint: None
 USER_ID_FIELD: user_id
 ITEM_ID_FIELD: item_id
-load_col:
-    inter: [user_id, item_id]
+RATING_FIELD: rating
 
-# model config
+load_col:
+  inter: [user_id, item_id, rating]
+
+# ====== Model ======
+model: BPR
 embedding_size: 64
 
-# Training and evaluation config
-epochs: 500
-train_batch_size: 4096
-eval_batch_size: 4096
-train_neg_sample_args:
-    distribution: uniform
-    sample_num: 1
-    alpha: 1.0
-    dynamic: False
-    candidate_num: 0
-eval_args:
-    group_by: user
-    order: RO
-    split: {'RS': [0.8,0.1,0.1]}
-    mode: full
-metrics: ['Recall', 'MRR', 'NDCG', 'Hit', 'Precision']
+# ====== Training ======
+epochs: 50
+train_batch_size: 2048
+learning_rate: 0.001
+neg_sampling:
+  uniform: 1
+
+# ====== Evaluation ======
+metrics: ['Recall', 'NDCG']
 topk: 10
-valid_metric: MRR@10
-metric_decimal_place: 4
+valid_metric: NDCG@10
+eval_args:
+  group_by: user
+  order: RO
+  mode: full
