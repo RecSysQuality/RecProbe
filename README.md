@@ -9,8 +9,8 @@ RecProbe is currently under review as a resource paper at SIGIR 2026.
 # :bookmark: Outline
 1. [Before starting](#before-starting)
 4. [Configuration](#recprobe-configuration)
-5. [Installation](#installation)
-6. [Usage](#usage)
+5. [Installation and Usage](#installation-and-usage)
+   
 
 
 
@@ -63,7 +63,7 @@ The output is a dataset in JSONL, JSON, or CSV formats. In addition, if the base
 
 ### YAML Configuration
 
-:warning: *Read this section to configure YAML manually. If you plan to use the user inteface, jump to [Installation](#installation)* :warning:
+:warning: *Read this section to configure YAML manually. If you plan to use the user inteface, jump to [Installation and Usage](#installation-and-usage)* :warning:
 YAML configuration is recommended to have full control of the pipeline.
 
 RecProbe requires at least two YAML configuration files: a base configuration file and a noise injection configuration file. 
@@ -73,6 +73,8 @@ The base file, located at `src/config/files/config_base.yaml`, defines the gener
 In addition, users must configure one of the noise injection YAML files located in `src/config/files/<injection_level>`, depending on the desired injection level (rating, review, or hybrid). Each folder contains one YAML file for each injection strategy; the user has to select the YAML file corresponding to the injection strategy they wnat to apply and configure the parameters for the corresponding injection strategy. 
 
 For example, to apply the *rating burst* strategy, the user should first configure `config_base.yaml`, and then edit `rating/rating_burst.yaml` by specifying the injection budget and the parameters under the `rating_burst` section. 
+
+For the users not familiar with YAML files, they cane rely on the related streamlit interface which ease the process of configuration. See [Streamlit user interface](###streamlit-user-interface).
 
 ### Evaluation
 The evaluation module enables users to compare the performance of a set of baseline models (selected by the user) on the dataset before and after the perturbation.
@@ -84,9 +86,9 @@ The evaluation module enables users to compare the performance of a set of basel
 
 
 
-# Installation
+# Installation and usage
 Once configured the YAML files and added the datasets in the data folder, follow these steps to install and use RecProbe.
-## From Docker
+## Install from Docker
 RecProbe is distributed as a docker image in order to provide easy deployment independently of the host operative system and infrastructure. 
 
 First, it is required to build the docker image:
@@ -94,13 +96,13 @@ First, it is required to build the docker image:
 docker build -t recprobe .
 ```
 
-### Streamlit user interface
+### Run streamlit user interface 
 If you want to use the user inteface to configure RecProbe and inject noise:
 ```
 docker run --rm  -ti --gpus '"device=1"' --name recprobe-container -v /src/data/:/code/src/ recprobe:latest python3 streamlit/str.py 
 ```
 
-### Manual YAML Configuration
+### Run with manual YAML Configuration
 If you configured your YAML manually, run the container:
 ```
 docker run --rm  -ti --gpus '"device=1"' --name recprobe-container -v ./src/data/:/code/src/ recprobe:latest python3 main.py --profile=rating --noise_injection=rating_burst --baselines
