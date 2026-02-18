@@ -22,7 +22,6 @@ from pathlib import Path
 from datetime import datetime
 import pandas as pd
 
-BASE_DIRR = os.path.dirname(os.path.abspath(__file__))  # punta a NoiseInjector/
 
 class RecBoleExperimentRunner(BaseBaselineRunner):
     def __init__(self,config, clean):
@@ -56,81 +55,6 @@ class RecBoleExperimentRunner(BaseBaselineRunner):
 
         self._save_results_csv()
 
-
-    import os
-    import pandas as pd
-    from pathlib import Path
-    import os
-    import re
-    import csv
-    import pandas as pd
-    from datetime import datetime
-
-    def _save_results_csv(self):
-        # BASE_DIR punta alla cartella corrente
-        BASE_DIR = Path(os.getcwd())
-
-        # cartella dei log
-        LOG_DIR = BASE_DIR / "log"  # nota: "logs", non "log"
-        CSV_OUT = BASE_DIR / "recbole_metrics.csv"
-
-        # prendi tutti i file .log ricorsivamente
-        log_files = sorted(LOG_DIR.rglob("*.log"), key=lambda p: p.stat().st_mtime, reverse=True)
-        if not log_files:
-            raise FileNotFoundError(f"Nessun file .log trovato in {LOG_DIR.resolve()}")
-
-        # regex
-        LINE_RE = re.compile(r"(valid|test)\s*result\s*:\s*(.*)", re.IGNORECASE)
-        KV_RE = re.compile(r"(\w+@?\d*)[:=]\s*([0-9.eE+-]+)")
-
-        rows = []
-        for LOG_PATH in log_files:
-            with LOG_PATH.open("r") as f:
-                for line in f:
-                    m = LINE_RE.search(line)
-                    if not m:
-                        continue
-                    split_type = m.group(1).lower()  # "valid" o "test"
-                    metrics_part = m.group(2).strip()
-
-                    metrics = dict(KV_RE.findall(metrics_part))
-                    row = {"split": split_type}
-                    row.update(metrics)
-                    rows.append(row)
-
-        if not rows:
-            raise ValueError("Nessuna riga di tipo 'valid result' o 'test result' trovata nei log.")
-
-        # tutte le metriche viste
-        all_keys = set()
-        for r in rows:
-            all_keys.update(r.keys())
-        all_keys.discard("split")
-        fieldnames = ["split"] + sorted(all_keys)
-
-        # DataFrame per salvare TSV “ufficiale”
-        df = pd.DataFrame(rows, columns=fieldnames)
-
-        # percorso risultati
-        results_dir = BASE_DIR / "results" / self.dataset
-        os.makedirs(results_dir, exist_ok=True)
-
-        out_name = (
-            f"results_recbole_clean_{datetime.now().strftime('%Y%m%d_%H%M%S')}.tsv"
-            if getattr(self, "clean", False)
-            else f"results_recbole_noisy_{datetime.now().strftime('%Y%m%d_%H%M%S')}.tsv"
-        )
-
-        df.to_csv(results_dir / out_name, sep="\t", index=False)
-
-        # opzionale: anche un CSV semplice nella cartella corrente
-        with CSV_OUT.open("w", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
-            writer.writeheader()
-            for r in rows:
-                writer.writerow(r)
-
-        print(f"Saved results to {results_dir / out_name} and {CSV_OUT}")
 
     def _adapt_for_recbole(
             self,
@@ -168,6 +92,74 @@ class RecBoleExperimentRunner(BaseBaselineRunner):
         print(f"✓ Dataset converted for RecBole: {output_file}")
         return df
 
+    def _save_results_csv(self):
+
+        import ast
+        import re
+        from pathlib import Path
+        from datetime import datetime
+        import pandas as pd
+        import os
+
+        BASE_DIR = Path(os.getcwd())
+        LOG_DIR = BASE_DIR / "baselines/recbole/log"
+
+        # prendi tutti i file .log ricorsivamente
+        log_files = sorted(LOG_DIR.rglob("*.log"))
+        if not log_files:
+            raise FileNotFoundError(f"Nessun file .log trovato in {LOG_DIR.resolve()}")
+
+        rows = []
+
+        for LOG_PATH in log_files:
+            method_name = LOG_PATH.stem  # nome file senza estensione
+
+            last_test_metrics = None  # prendiamo l'ultimo test result nel file
+
+            with LOG_PATH.open("r", encoding="utf-8") as f:
+                for line in f:
+                    if "test result:" not in line.lower():
+                        continue
+
+                    match = re.search(r"OrderedDict\((.*)\)", line)
+                    if not match:
+                        continue
+
+                    try:
+                        metrics = dict(ast.literal_eval(match.group(1)))
+                        last_test_metrics = metrics
+                    except Exception:
+                        continue
+
+            # aggiungi solo se trovato almeno un test result
+            if last_test_metrics:
+                row = {"model": method_name.split('-')[0]}
+                row.update(last_test_metrics)
+                rows.append(row)
+
+        if not rows:
+            raise ValueError("No test result in log.")
+
+        # DataFrame finale: riga = metodo, colonne = metriche
+        df = pd.DataFrame(rows)
+        df = df.sort_values("model")
+
+        # directory risultati
+
+
+        out_name = (
+            f"results_recbole_clean_{datetime.now().strftime('%Y%m%d_%H%M%S')}.tsv"
+            if getattr(self, "clean", False)
+            else f"results_recbole_noisy_{datetime.now().strftime('%Y%m%d_%H%M%S')}.tsv"
+        )
+        RES_DIR = os.path.dirname(os.path.abspath(__file__))  # punta a NoiseInjector/
+
+        if not os.path.exists(f"{RES_DIR}/../results/{self.dataset}/{out_name}"):
+            os.makedirs(f"{RES_DIR}/../results/{self.dataset}", exist_ok=True)
+        df.to_csv(f"{RES_DIR}/../results/{self.dataset}/{out_name}", sep='\t', index=True)
+
+
+
     def _compute_quality_metrics(self,model,train_set,all_items,interaction_counts):
         # Costruisci raccomandazioni top-10 per utente
         recommendations_model = {}
@@ -186,29 +178,27 @@ class RecBoleExperimentRunner(BaseBaselineRunner):
 
 
 
-import yaml
-# --- Configurazione di base ---
-BASE_DIR = '/Users/ornellairrera/PycharmProjects/RecProbe/src/data/output/amazon_All_Beauty/'
-RECBOLE_DIR = '/Users/ornellairrera/PycharmProjects/RecProbe/src/baselines/recbole/'
-
-# Percorsi dei dati
-TRAIN_PATH = os.path.join(BASE_DIR, "train.csv")
-VALIDATION_PATH = os.path.join(BASE_DIR, "validation.csv")
-TEST_PATH = os.path.join(BASE_DIR, "test.csv")
-
-# Caricamento della configurazione generale
-CONFIG_PATH = os.path.join(RECBOLE_DIR, "config", "config.yaml")
-with open(CONFIG_PATH, "r") as f:
-    config = yaml.safe_load(f)
-
-# --- Istanzio il runner ---
-runner = RecBoleExperimentRunner(config=config, clean=True)
-
-# --- Eseguo l'esperimento ---
+# import yaml
+# # --- Configurazione di base ---
+# BASE_DIR = '/Users/ornellairrera/PycharmProjects/RecProbe/src/data/output/amazon_All_Beauty/'
+# RECBOLE_DIR = '/Users/ornellairrera/PycharmProjects/RecProbe/src/baselines/recbole/'
+#
+# # Percorsi dei dati
+# TRAIN_PATH = os.path.join(BASE_DIR, "train.csv")
+# VALIDATION_PATH = os.path.join(BASE_DIR, "validation.csv")
+# TEST_PATH = os.path.join(BASE_DIR, "test.csv")
+#
+# # Caricamento della configurazione generale
+# CONFIG_PATH = os.path.join(RECBOLE_DIR, "config", "config.yaml")
+# with open(CONFIG_PATH, "r") as f:
+#     config = yaml.safe_load(f)
+#
+# # --- Istanzio il runner ---
+# runner = RecBoleExperimentRunner(config=config, clean=True)
+#
+# # --- Eseguo l'esperimento ---
 # runner.run(
 #     training_path=TRAIN_PATH,
 #     validation_path=VALIDATION_PATH,
 #     test_path=TEST_PATH
 # )
-runner._save_results_csv()
-print("✓ Esperimento completato!")
