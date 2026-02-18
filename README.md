@@ -53,13 +53,10 @@ RecProbe requires in input one file in JSONL, JSON or CSV containing the followi
 - title: title of the review (optional)
 
 If the dataset is yelp or a subset of amazon reviews 23, RecProble already provides support for them, just add "amazon" in the name of the dataset, for example: *amazon_All_Beauty*.
-
-The original dataset must be place inside the folder ```src/data/input/<name_of_the_dataset>/```; the generated perturbed dataset will be placed inside ```src/data/output/<name_of_the_dataset>/```. 
-
 If the custom dataset contains these fields but with a different name, provide a mapping in the file ```src/data_model/reviewModel.py```.
-The output is a dataset in JSONL, JSON, or CSV formats. In addition, if the baselines are computed, RecProbe provides a unified table of comparison of performances.
 
 
+The original dataset must be place inside the folder ```src/data/input/<name_of_the_dataset>/```; the generated perturbed dataset (in JSONL, JSON or CSV) will be placed inside ```src/data/output/<name_of_the_dataset>/```. 
 
 ### YAML Configuration
 
