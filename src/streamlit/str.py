@@ -2,7 +2,6 @@ import streamlit as st
 import os
 import yaml
 from datetime import datetime
-from src.main import main
 # --------------------------------------------------
 # Page Setup
 # --------------------------------------------------
@@ -411,4 +410,3 @@ if st.button("🛡️ Save Configuration", use_container_width=True):
     path = save_config(config)
     st.success("Configuration saved!")
     st.info(path)
-    main()

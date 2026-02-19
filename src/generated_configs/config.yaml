@@ -1,0 +1,46 @@
+input:
+  reviews:
+    file_name: yelp_academic_dataset_review
+    format: json
+    separator: ','
+  items:
+    file_name: meta_All_Beauty
+    format: csv
+    separator: ','
+output:
+  reviews:
+    format: csv
+    separator: ','
+  items:
+    format: csv
+    separator: ','
+noise_profile: rating
+kcore: 20
+min_rating: 1
+min_review_length: 0
+split:
+  training: 0.8
+  validation: 0.1
+  test: 0.1
+  noise_in_test: false
+  strategy: random holdout
+drop_duplicates: true
+dataset: yelp
+random_seed: 42
+verbose: true
+context: realistic_noise
+budget: 1000
+realistic_noise:
+  operation: add
+  target: item
+  selection_strategy: uniform
+  max_ratings_per_node: 100
+  min_ratings_per_node: 10
+  preserve_degree_distribution: true
+  rating_behavior:
+    min_rating: 1
+    max_rating: 5
+    sampling_strategy: gaussian
+  temporal_interval:
+    start_timestamp: 1609459200
+    end_timestamp: 1640995200
