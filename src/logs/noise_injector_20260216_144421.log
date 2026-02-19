@@ -1,4 +1,0 @@
-2026-02-16 14:44:21,144 | INFO | Loading JSONL file in chunks from /Users/ornellairrera/PycharmProjects/RecProbe/src/data/input/amazon_All_Beauty/All_Beauty.jsonl
-2026-02-16 14:44:27,862 | INFO | Finished loading JSONL file from /Users/ornellairrera/PycharmProjects/RecProbe/src/data/input/amazon_All_Beauty/All_Beauty.jsonl
-2026-02-16 14:44:29,564 | INFO | Extracting 3-core from the dataset
-2026-02-16 14:44:30,464 | INFO | Finished extracting 3-core. Remaining records: 9079
