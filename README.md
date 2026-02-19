@@ -60,7 +60,7 @@ The original dataset must be place inside the folder ```src/data/input/<name_of_
 
 ### YAML Configuration
 
-:warning: *Read this section to configure YAML manually. If you plan to use the user inteface, jump to [Installation and Usage](#installation-and-usage)* :warning:
+:warning: *Read this section to configure YAML manually. If you plan to use the user inteface, jump to [Installation and Usage](#installation-and-usage)* and [Streamlit user interface](###streamlit-user-interface) :warning:
 YAML configuration is recommended to have full control of the pipeline.
 
 RecProbe requires at least two YAML configuration files: a base configuration file and a noise injection configuration file. 
@@ -71,15 +71,16 @@ In addition, users must configure one of the noise injection YAML files located 
 
 For example, to apply the *rating burst* strategy, the user should first configure `config_base.yaml`, and then edit `rating/rating_burst.yaml` by specifying the injection budget and the parameters under the `rating_burst` section. 
 
-For the users not familiar with YAML files, they cane rely on the related streamlit interface which ease the process of configuration. See [Streamlit user interface](###streamlit-user-interface).
 
 ### Evaluation
-The evaluation module enables users to compare the performance of a set of baseline models (selected by the user) on the dataset before and after the perturbation.
-- **Custom evaluation**. Users can assess the perturbed and original datasets using custom baseline models and evaluation metrics (see Section [Customization](#customization)).
+The evaluation module enables users to compare the performance of a set of baseline models (selected by the user) on the dataset before and after the perturbation. In the YAML file `src/config/config_base.yaml` the user is asked to specify whether *cornac*, *RecBole*, or *custom* evaluation is applied. 
+
+- **Custom evaluation**. Users can assess the perturbed and original datasets using custom baseline models and evaluation metrics. In this case, the user is asked to provide both the models implementations and the metrics to be used. Custom evaluation must be implemented in the `src/baselines/custom/custom_runner.py` where the user must provide the implementation of the `run` method of the class `CustomExperimentRunner` where the selected baselines are run. The desired output is `dataframe` with **models** in the rows and **metrics** in the columns. This format allows to generate the final table of comparison.
 
 - **Cornac evaluation**. Users can evaluate baseline models implemented in Cornac by specifying the desired methods and evaluation metrics directly in the corresponding YAML configuration file. Each baseline can be configured by setting its parameters and selecting the metrics to compute.
 
 - **RecBole evaluation**. Users can evaluate models supported by RecBole by defining the methods, hyperparameters, and evaluation metrics within the dedicated YAML configuration files. The framework automatically loads the specified configurations and performs the evaluation accordingly.
+
 
 
 
