@@ -20,11 +20,11 @@ dataset_path = st.sidebar.text_input("Dataset path", "data/input/amazon_All_Beau
 # Input files
 st.sidebar.subheader("📥 Input Files")
 reviews_file = st.sidebar.text_input("Reviews file name", "All_Beauty")
-reviews_format = st.sidebar.selectbox("Reviews format", ["csv", "json"], index=1)
+reviews_format = st.sidebar.selectbox("Reviews format", ["csv", "json", "jsonl"], index=1)
 reviews_sep = st.sidebar.text_input("Reviews separator", ",")
 
 items_file = st.sidebar.text_input("Items file name", "meta_All_Beauty")
-items_format = st.sidebar.selectbox("Items format", ["csv", "json"], index=0)
+items_format = st.sidebar.selectbox("Items format", ["csv", "json", "jsonl"], index=0)
 items_sep = st.sidebar.text_input("Items separator", ",")
 
 # Output files
@@ -37,7 +37,7 @@ output_items_sep = st.sidebar.text_input("Output items separator", ",")
 # Noise and preprocessing
 st.sidebar.subheader("⚙️ Preprocessing / Noise")
 noise_profile = st.sidebar.selectbox("Noise profile", ["rating", "review", "combined"], index=0)
-kcore = st.sidebar.number_input("k-core", min_value=0, value=20)
+kcore = st.sidebar.number_input("k-core", min_value=0, value=3)
 min_rating = st.sidebar.slider("Min rating", 1, 5, 1)
 min_review_length = st.sidebar.number_input("Min review length", value=0)
 
@@ -431,7 +431,7 @@ st.json(config)
 # SAVE FUNCTION
 # --------------------------------------------------
 def save_config(config):
-    folder = os.path.join("generated_configs", '')
+    folder = os.path.join("/code/src/streamlit/generated_configs", '')
     os.makedirs(folder, exist_ok=True)
 
     #timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

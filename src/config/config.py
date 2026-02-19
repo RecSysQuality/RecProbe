@@ -55,6 +55,7 @@ class Config:
     random_seed: int = 42
     verbose: bool = False
     dataset: str = "amazon_All_Beauty"
+    context: Optional[str] = ''
     noise_config: Optional[
         Union[RatingConfig, ReviewConfig, RatingReviewConfig]
     ] = None
@@ -123,6 +124,7 @@ def load_streamlit_config(
     split_cfg = SplitConfig(**cfg_dict["split"])
 
     noise_profile = cfg_dict.get("noise_profile")
+    context = cfg_dict.get("context")
 
     if noise_profile == "rating":
         noise_config = load_rating_config(path,streamlit=True)
@@ -140,12 +142,14 @@ def load_streamlit_config(
         noise_context=noise_config.context,
         split=split_cfg,
         random_seed=cfg_dict.get("random_seed", 42),
+        evaluation=cfg_dict.get("evaluation", 'cornac'),
         kcore=cfg_dict.get("kcore", 5),
         min_rating=cfg_dict.get("min_rating", 1),
         min_review_length=cfg_dict.get("min_review_length", 0),
         verbose=cfg_dict.get("verbose", False),
         dataset=cfg_dict.get("dataset"),
         noise_config=noise_config,
+        context=context
     )
 
 # ------------------ DEBUG ------------------

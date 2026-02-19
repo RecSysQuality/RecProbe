@@ -36,8 +36,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # punta a NoiseInjector/
 CONFIG_PATH = os.path.join(BASE_DIR, "config/files", "config_base.yaml")
 CONFIG_PATH_STREAMLIT = os.path.join(BASE_DIR, "streamlit/generated_configs", "config.yaml")
 
-if os.path.exists(CONFIG_PATH_STREAMLIT):
-    config = load_streamlit_config()
+
 
 
 def main():
@@ -106,10 +105,13 @@ def main():
 
     log_file=f"{BASE_DIR}/logs/noise_injector_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
     logger = get_logger(log_file=log_file, level=logging.INFO)
-    config = load_config(CONFIG_PATH, profile=profile, context=noise_injection)
-    logger.info("config")
-    logger.info(config)
-
+    config = None
+    if os.path.exists(CONFIG_PATH_STREAMLIT):
+        logger.info("Loading streamlit config...")
+        config = load_streamlit_config()
+    if not config:
+        config = load_config(CONFIG_PATH, profile=profile, context=noise_injection)
+    print(config)
     set_seed(config.random_seed)
 
     loader = DatasetLoader(logger=logger,config=config)
@@ -178,4 +180,5 @@ def main():
     exit(0)
 
 if __name__ == "__main__":
+
     main()

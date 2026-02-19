@@ -1,5 +1,5 @@
 # ====== Dataset ======
-data_path: './dataset'
+data_path: '/code/src/baselines/recbole/dataset'
 dataset: 'amazon_All_Beauty'   # verrà sovrascritto dinamicamente se vuoi
 benchmark_filename: ['train', 'tune', 'test']
 save_model: False

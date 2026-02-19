@@ -85,20 +85,34 @@ def load_hybrid_config(path: str = "files/config_hybrid.yaml",context: str = 'ra
         cfg_dict['context'] = context
 
     if streamlit:
+        cfg_dict['context'] = "timestamp_corruption"
+
         # Trova l'indice di noise_profile nell'ordine originale
         keys = list(cfg_dict.keys())
-        start_index = keys.index("noise_profile")
+        if 'random_inconsistencies' in list(keys):
+            start_index = keys.index("random_inconsistencies")
+            ctx = "random_inconsistencies"
+        elif 'hybrid_burst' in list(keys):
+            start_index = keys.index("hybrid_burst")
+            ctx = "hybrid_burst"
+        else:
+            start_index = keys.index("semantic_drift")
+            ctx = "semantic_drift"
 
         # Crea un nuovo dict solo dalla chiave noise_profile in poi
         filtered_dict = {
             k: cfg_dict[k] for k in keys[start_index:]
         }
 
-        cfg_dict = filtered_dict
+        filtered_dict['context'] = ctx
+        filtered_dict['budget'] = cfg_dict['budget']
+        filtered_dict['avoid_duplicates'] = cfg_dict['avoid_duplicates']
+        if 'preserve_degree_distribution' in keys:
+            filtered_dict['avoid_duplicates'] = cfg_dict['avoid_duplicates']
 
     return from_dict(
         data_class=RatingReviewConfig,
-        data=cfg_dict
+        data=filtered_dict
     )
 
 # =========================

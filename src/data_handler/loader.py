@@ -31,20 +31,23 @@ class DatasetLoader:
         # path_validation = f"{BASE_DIR}/data/output/{self.config.dataset}/validation.csv"
         # path_test = f"{BASE_DIR}/data/output/{self.config.dataset}/test.csv"
         #if not os.path.exists(path_train):
-            if self.config.input.reviews['format'] == 'jsonl':
-                df = self.load_jsonl(
-                    f"{BASE_DIR}/data/input/{self.config.dataset}/{self.config.input.reviews['file_name']}.{self.config.input.reviews['format']}")
-            elif self.config.input.reviews['format'] == 'json':
-                df = self.load_jsonl(
-                    f"{BASE_DIR}/data/input/{self.config.dataset}/{self.config.input.reviews['file_name']}.{self.config.input.reviews['format']}")
-            elif self.config.input.reviews['format'] == 'csv':
-                df = self.load_csv(
-                    f"{BASE_DIR}/data/input/{self.config.dataset}/{self.config.input.reviews['file_name']}.{self.config.input.reviews['format']}")
+            try:
+                if self.config.input.reviews['format'] == 'jsonl':
+                    df = self.load_jsonl(
+                        f"{BASE_DIR}/data/input/{self.config.dataset}/{self.config.input.reviews['file_name']}.{self.config.input.reviews['format']}")
+                elif self.config.input.reviews['format'] == 'json':
+                    df = self.load_jsonl(
+                        f"{BASE_DIR}/data/input/{self.config.dataset}/{self.config.input.reviews['file_name']}.{self.config.input.reviews['format']}")
+                elif self.config.input.reviews['format'] == 'csv':
+                    df = self.load_csv(
+                        f"{BASE_DIR}/data/input/{self.config.dataset}/{self.config.input.reviews['file_name']}.{self.config.input.reviews['format']}")
 
-            df = self.normalize(df, 'interactions', self.config.dataset)
-            df = self.extract_kcore(df)
-            df = self.filter_by_rating_review(df)
-            df,df_val,df_test = self.save_csv(df=df,modified=pd.DataFrame(),clean=True)
+                df = self.normalize(df, 'interactions', self.config.dataset)
+                df = self.extract_kcore(df)
+                df = self.filter_by_rating_review(df)
+                df,df_val,df_test = self.save_csv(df=df,modified=pd.DataFrame(),clean=True)
+            except Exception as e:
+                self.logger.info("You have to provide a dataset!")
         # else:
         #     df = pd.read_csv(path_train)
         #     df_val = pd.read_csv(path_validation)

@@ -1,0 +1,384 @@
+Wed 18 Feb 2026 11:23:54 INFO  ['/Users/ornellairrera/PycharmProjects/RecProbe/src/baselines/recbole/recbole_runner.py']
+Wed 18 Feb 2026 11:23:54 INFO  
+General Hyper Parameters:
+gpu_id = 0
+use_gpu = True
+seed = 2020
+state = INFO
+reproducibility = True
+data_path = ./dataset/amazon_All_Beauty
+checkpoint_dir = None
+show_progress = True
+save_dataset = False
+dataset_save_path = None
+save_dataloaders = False
+dataloaders_save_path = None
+log_wandb = False
+
+Training Hyper Parameters:
+epochs = 50
+train_batch_size = 2048
+learner = adam
+learning_rate = 0.001
+train_neg_sample_args = {'distribution': 'uniform', 'sample_num': 1, 'alpha': 1.0, 'dynamic': False, 'candidate_num': 0}
+eval_step = 1
+stopping_step = 10
+clip_grad_norm = None
+weight_decay = 0.0
+loss_decimal_place = 4
+
+Evaluation Hyper Parameters:
+eval_args = {'split': {'RS': [0.8, 0.1, 0.1]}, 'order': 'RO', 'group_by': 'user', 'mode': {'valid': 'full', 'test': 'full'}}
+repeatable = False
+metrics = ['Recall', 'NDCG']
+topk = [10]
+valid_metric = NDCG@10
+valid_metric_bigger = True
+eval_batch_size = 4096
+metric_decimal_place = 4
+
+Dataset Hyper Parameters:
+field_separator = 	
+seq_separator =  
+USER_ID_FIELD = user_id
+ITEM_ID_FIELD = item_id
+RATING_FIELD = rating
+TIME_FIELD = timestamp
+seq_len = None
+LABEL_FIELD = label
+threshold = None
+NEG_PREFIX = neg_
+load_col = {'inter': ['user_id', 'item_id', 'rating']}
+unload_col = None
+unused_col = None
+additional_feat_suffix = None
+rm_dup_inter = None
+val_interval = None
+filter_inter_by_user_or_item = True
+user_inter_num_interval = [0,inf)
+item_inter_num_interval = [0,inf)
+alias_of_user_id = None
+alias_of_item_id = None
+alias_of_entity_id = None
+alias_of_relation_id = None
+preload_weight = None
+normalize_field = None
+normalize_all = None
+ITEM_LIST_LENGTH_FIELD = item_length
+LIST_SUFFIX = _list
+MAX_ITEM_LIST_LENGTH = 50
+POSITION_FIELD = position_id
+HEAD_ENTITY_ID_FIELD = head_id
+TAIL_ENTITY_ID_FIELD = tail_id
+RELATION_ID_FIELD = relation_id
+ENTITY_ID_FIELD = entity_id
+benchmark_filename = ['train', 'valid', 'test']
+
+Other Hyper Parameters: 
+worker = 0
+wandb_project = recbole
+shuffle = True
+require_pow = False
+enable_amp = False
+enable_scaler = False
+transform = None
+embedding_size = 64
+numerical_features = []
+discretization = None
+kg_reverse_r = False
+entity_kg_num_interval = [0,inf)
+relation_kg_num_interval = [0,inf)
+MODEL_TYPE = ModelType.GENERAL
+save_model = False
+load_best_model_at_end = False
+load_checkpoint = None
+neg_sampling = {'uniform': 1}
+MODEL_INPUT_TYPE = InputType.PAIRWISE
+eval_type = EvaluatorType.RANKING
+single_spec = True
+local_rank = 0
+device = cpu
+valid_neg_sample_args = {'distribution': 'uniform', 'sample_num': 'none'}
+test_neg_sample_args = {'distribution': 'uniform', 'sample_num': 'none'}
+
+
+Wed 18 Feb 2026 11:23:54 INFO  amazon_All_Beauty
+The number of users: 1267
+Average actions of users: 7.169826224328594
+The number of items: 1474
+Average actions of items: 6.162253903598099
+The number of inters: 9077
+The sparsity of the dataset: 99.51396422493973%
+Remain Fields: ['user_id', 'item_id', 'rating']
+Wed 18 Feb 2026 11:23:54 INFO  [Training]: train_batch_size = [2048] train_neg_sample_args: [{'distribution': 'uniform', 'sample_num': 1, 'alpha': 1.0, 'dynamic': False, 'candidate_num': 0}]
+Wed 18 Feb 2026 11:23:54 INFO  [Evaluation]: eval_batch_size = [4096] eval_args: [{'split': {'RS': [0.8, 0.1, 0.1]}, 'order': 'RO', 'group_by': 'user', 'mode': {'valid': 'full', 'test': 'full'}}]
+Wed 18 Feb 2026 11:23:54 INFO  BPR(
+  (user_embedding): Embedding(1267, 64)
+  (item_embedding): Embedding(1474, 64)
+  (loss): BPRLoss()
+)
+Trainable parameters: 175424
+Wed 18 Feb 2026 11:23:54 INFO  FLOPs: 128.0
+Wed 18 Feb 2026 11:23:55 INFO  epoch 0 training [time: 0.04s, train loss: 2.7725]
+Wed 18 Feb 2026 11:23:55 INFO  epoch 0 evaluating [time: 0.05s, valid_score: 0.007000]
+Wed 18 Feb 2026 11:23:55 INFO  valid result: 
+recall@10 : 0.012    ndcg@10 : 0.007
+Wed 18 Feb 2026 11:23:55 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:55 INFO  epoch 1 training [time: 0.10s, train loss: 2.7661]
+Wed 18 Feb 2026 11:23:55 INFO  epoch 1 evaluating [time: 0.05s, valid_score: 0.007300]
+Wed 18 Feb 2026 11:23:55 INFO  valid result: 
+recall@10 : 0.012    ndcg@10 : 0.0073
+Wed 18 Feb 2026 11:23:55 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:55 INFO  epoch 2 training [time: 0.08s, train loss: 2.7612]
+Wed 18 Feb 2026 11:23:55 INFO  epoch 2 evaluating [time: 0.04s, valid_score: 0.008600]
+Wed 18 Feb 2026 11:23:55 INFO  valid result: 
+recall@10 : 0.0129    ndcg@10 : 0.0086
+Wed 18 Feb 2026 11:23:55 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:55 INFO  epoch 3 training [time: 0.02s, train loss: 2.7555]
+Wed 18 Feb 2026 11:23:55 INFO  epoch 3 evaluating [time: 0.04s, valid_score: 0.009600]
+Wed 18 Feb 2026 11:23:55 INFO  valid result: 
+recall@10 : 0.0135    ndcg@10 : 0.0096
+Wed 18 Feb 2026 11:23:55 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:55 INFO  epoch 4 training [time: 0.01s, train loss: 2.7510]
+Wed 18 Feb 2026 11:23:55 INFO  epoch 4 evaluating [time: 0.04s, valid_score: 0.010200]
+Wed 18 Feb 2026 11:23:55 INFO  valid result: 
+recall@10 : 0.0153    ndcg@10 : 0.0102
+Wed 18 Feb 2026 11:23:55 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:55 INFO  epoch 5 training [time: 0.01s, train loss: 2.7453]
+Wed 18 Feb 2026 11:23:55 INFO  epoch 5 evaluating [time: 0.04s, valid_score: 0.013300]
+Wed 18 Feb 2026 11:23:55 INFO  valid result: 
+recall@10 : 0.0208    ndcg@10 : 0.0133
+Wed 18 Feb 2026 11:23:55 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:55 INFO  epoch 6 training [time: 0.01s, train loss: 2.7394]
+Wed 18 Feb 2026 11:23:55 INFO  epoch 6 evaluating [time: 0.04s, valid_score: 0.015500]
+Wed 18 Feb 2026 11:23:55 INFO  valid result: 
+recall@10 : 0.0177    ndcg@10 : 0.0155
+Wed 18 Feb 2026 11:23:55 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:55 INFO  epoch 7 training [time: 0.01s, train loss: 2.7350]
+Wed 18 Feb 2026 11:23:55 INFO  epoch 7 evaluating [time: 0.04s, valid_score: 0.017400]
+Wed 18 Feb 2026 11:23:55 INFO  valid result: 
+recall@10 : 0.0193    ndcg@10 : 0.0174
+Wed 18 Feb 2026 11:23:55 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:55 INFO  epoch 8 training [time: 0.01s, train loss: 2.7288]
+Wed 18 Feb 2026 11:23:55 INFO  epoch 8 evaluating [time: 0.04s, valid_score: 0.018300]
+Wed 18 Feb 2026 11:23:55 INFO  valid result: 
+recall@10 : 0.0193    ndcg@10 : 0.0183
+Wed 18 Feb 2026 11:23:55 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:55 INFO  epoch 9 training [time: 0.01s, train loss: 2.7226]
+Wed 18 Feb 2026 11:23:55 INFO  epoch 9 evaluating [time: 0.04s, valid_score: 0.019500]
+Wed 18 Feb 2026 11:23:55 INFO  valid result: 
+recall@10 : 0.0211    ndcg@10 : 0.0195
+Wed 18 Feb 2026 11:23:55 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:55 INFO  epoch 10 training [time: 0.01s, train loss: 2.7165]
+Wed 18 Feb 2026 11:23:55 INFO  epoch 10 evaluating [time: 0.04s, valid_score: 0.020300]
+Wed 18 Feb 2026 11:23:55 INFO  valid result: 
+recall@10 : 0.0229    ndcg@10 : 0.0203
+Wed 18 Feb 2026 11:23:55 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:55 INFO  epoch 11 training [time: 0.01s, train loss: 2.7096]
+Wed 18 Feb 2026 11:23:55 INFO  epoch 11 evaluating [time: 0.04s, valid_score: 0.020800]
+Wed 18 Feb 2026 11:23:55 INFO  valid result: 
+recall@10 : 0.0238    ndcg@10 : 0.0208
+Wed 18 Feb 2026 11:23:55 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:55 INFO  epoch 12 training [time: 0.01s, train loss: 2.7033]
+Wed 18 Feb 2026 11:23:55 INFO  epoch 12 evaluating [time: 0.04s, valid_score: 0.021200]
+Wed 18 Feb 2026 11:23:55 INFO  valid result: 
+recall@10 : 0.0242    ndcg@10 : 0.0212
+Wed 18 Feb 2026 11:23:55 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:56 INFO  epoch 13 training [time: 0.01s, train loss: 2.6962]
+Wed 18 Feb 2026 11:23:56 INFO  epoch 13 evaluating [time: 0.04s, valid_score: 0.021900]
+Wed 18 Feb 2026 11:23:56 INFO  valid result: 
+recall@10 : 0.0252    ndcg@10 : 0.0219
+Wed 18 Feb 2026 11:23:56 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:56 INFO  epoch 14 training [time: 0.01s, train loss: 2.6881]
+Wed 18 Feb 2026 11:23:56 INFO  epoch 14 evaluating [time: 0.04s, valid_score: 0.022500]
+Wed 18 Feb 2026 11:23:56 INFO  valid result: 
+recall@10 : 0.0242    ndcg@10 : 0.0225
+Wed 18 Feb 2026 11:23:56 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:56 INFO  epoch 15 training [time: 0.01s, train loss: 2.6800]
+Wed 18 Feb 2026 11:23:56 INFO  epoch 15 evaluating [time: 0.04s, valid_score: 0.023100]
+Wed 18 Feb 2026 11:23:56 INFO  valid result: 
+recall@10 : 0.0261    ndcg@10 : 0.0231
+Wed 18 Feb 2026 11:23:56 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:56 INFO  epoch 16 training [time: 0.01s, train loss: 2.6716]
+Wed 18 Feb 2026 11:23:56 INFO  epoch 16 evaluating [time: 0.04s, valid_score: 0.023300]
+Wed 18 Feb 2026 11:23:56 INFO  valid result: 
+recall@10 : 0.0265    ndcg@10 : 0.0233
+Wed 18 Feb 2026 11:23:56 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:56 INFO  epoch 17 training [time: 0.01s, train loss: 2.6626]
+Wed 18 Feb 2026 11:23:56 INFO  epoch 17 evaluating [time: 0.04s, valid_score: 0.023800]
+Wed 18 Feb 2026 11:23:56 INFO  valid result: 
+recall@10 : 0.0265    ndcg@10 : 0.0238
+Wed 18 Feb 2026 11:23:56 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:56 INFO  epoch 18 training [time: 0.01s, train loss: 2.6530]
+Wed 18 Feb 2026 11:23:56 INFO  epoch 18 evaluating [time: 0.04s, valid_score: 0.025300]
+Wed 18 Feb 2026 11:23:56 INFO  valid result: 
+recall@10 : 0.0311    ndcg@10 : 0.0253
+Wed 18 Feb 2026 11:23:56 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:56 INFO  epoch 19 training [time: 0.01s, train loss: 2.6429]
+Wed 18 Feb 2026 11:23:56 INFO  epoch 19 evaluating [time: 0.04s, valid_score: 0.025600]
+Wed 18 Feb 2026 11:23:56 INFO  valid result: 
+recall@10 : 0.0311    ndcg@10 : 0.0256
+Wed 18 Feb 2026 11:23:56 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:56 INFO  epoch 20 training [time: 0.01s, train loss: 2.6319]
+Wed 18 Feb 2026 11:23:56 INFO  epoch 20 evaluating [time: 0.04s, valid_score: 0.026100]
+Wed 18 Feb 2026 11:23:56 INFO  valid result: 
+recall@10 : 0.0311    ndcg@10 : 0.0261
+Wed 18 Feb 2026 11:23:56 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:56 INFO  epoch 21 training [time: 0.01s, train loss: 2.6202]
+Wed 18 Feb 2026 11:23:56 INFO  epoch 21 evaluating [time: 0.04s, valid_score: 0.026200]
+Wed 18 Feb 2026 11:23:56 INFO  valid result: 
+recall@10 : 0.0311    ndcg@10 : 0.0262
+Wed 18 Feb 2026 11:23:56 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:56 INFO  epoch 22 training [time: 0.01s, train loss: 2.6078]
+Wed 18 Feb 2026 11:23:56 INFO  epoch 22 evaluating [time: 0.04s, valid_score: 0.027800]
+Wed 18 Feb 2026 11:23:56 INFO  valid result: 
+recall@10 : 0.0338    ndcg@10 : 0.0278
+Wed 18 Feb 2026 11:23:56 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:56 INFO  epoch 23 training [time: 0.01s, train loss: 2.5954]
+Wed 18 Feb 2026 11:23:56 INFO  epoch 23 evaluating [time: 0.05s, valid_score: 0.029100]
+Wed 18 Feb 2026 11:23:56 INFO  valid result: 
+recall@10 : 0.0353    ndcg@10 : 0.0291
+Wed 18 Feb 2026 11:23:56 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:56 INFO  epoch 24 training [time: 0.02s, train loss: 2.5820]
+Wed 18 Feb 2026 11:23:56 INFO  epoch 24 evaluating [time: 0.05s, valid_score: 0.030300]
+Wed 18 Feb 2026 11:23:56 INFO  valid result: 
+recall@10 : 0.038    ndcg@10 : 0.0303
+Wed 18 Feb 2026 11:23:56 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:56 INFO  epoch 25 training [time: 0.01s, train loss: 2.5669]
+Wed 18 Feb 2026 11:23:56 INFO  epoch 25 evaluating [time: 0.04s, valid_score: 0.032200]
+Wed 18 Feb 2026 11:23:56 INFO  valid result: 
+recall@10 : 0.0416    ndcg@10 : 0.0322
+Wed 18 Feb 2026 11:23:56 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:56 INFO  epoch 26 training [time: 0.01s, train loss: 2.5520]
+Wed 18 Feb 2026 11:23:56 INFO  epoch 26 evaluating [time: 0.04s, valid_score: 0.033900]
+Wed 18 Feb 2026 11:23:56 INFO  valid result: 
+recall@10 : 0.0453    ndcg@10 : 0.0339
+Wed 18 Feb 2026 11:23:56 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:56 INFO  epoch 27 training [time: 0.01s, train loss: 2.5361]
+Wed 18 Feb 2026 11:23:56 INFO  epoch 27 evaluating [time: 0.04s, valid_score: 0.034900]
+Wed 18 Feb 2026 11:23:56 INFO  valid result: 
+recall@10 : 0.0453    ndcg@10 : 0.0349
+Wed 18 Feb 2026 11:23:56 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:56 INFO  epoch 28 training [time: 0.01s, train loss: 2.5203]
+Wed 18 Feb 2026 11:23:56 INFO  epoch 28 evaluating [time: 0.04s, valid_score: 0.035800]
+Wed 18 Feb 2026 11:23:56 INFO  valid result: 
+recall@10 : 0.0453    ndcg@10 : 0.0358
+Wed 18 Feb 2026 11:23:56 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:56 INFO  epoch 29 training [time: 0.01s, train loss: 2.5025]
+Wed 18 Feb 2026 11:23:56 INFO  epoch 29 evaluating [time: 0.04s, valid_score: 0.036900]
+Wed 18 Feb 2026 11:23:56 INFO  valid result: 
+recall@10 : 0.0462    ndcg@10 : 0.0369
+Wed 18 Feb 2026 11:23:56 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:56 INFO  epoch 30 training [time: 0.01s, train loss: 2.4846]
+Wed 18 Feb 2026 11:23:56 INFO  epoch 30 evaluating [time: 0.04s, valid_score: 0.038400]
+Wed 18 Feb 2026 11:23:56 INFO  valid result: 
+recall@10 : 0.0462    ndcg@10 : 0.0384
+Wed 18 Feb 2026 11:23:57 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:57 INFO  epoch 31 training [time: 0.01s, train loss: 2.4663]
+Wed 18 Feb 2026 11:23:57 INFO  epoch 31 evaluating [time: 0.04s, valid_score: 0.039500]
+Wed 18 Feb 2026 11:23:57 INFO  valid result: 
+recall@10 : 0.048    ndcg@10 : 0.0395
+Wed 18 Feb 2026 11:23:57 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:57 INFO  epoch 32 training [time: 0.01s, train loss: 2.4441]
+Wed 18 Feb 2026 11:23:57 INFO  epoch 32 evaluating [time: 0.05s, valid_score: 0.040000]
+Wed 18 Feb 2026 11:23:57 INFO  valid result: 
+recall@10 : 0.0482    ndcg@10 : 0.04
+Wed 18 Feb 2026 11:23:57 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:57 INFO  epoch 33 training [time: 0.01s, train loss: 2.4232]
+Wed 18 Feb 2026 11:23:57 INFO  epoch 33 evaluating [time: 0.05s, valid_score: 0.042000]
+Wed 18 Feb 2026 11:23:57 INFO  valid result: 
+recall@10 : 0.0533    ndcg@10 : 0.042
+Wed 18 Feb 2026 11:23:57 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:57 INFO  epoch 34 training [time: 0.02s, train loss: 2.4049]
+Wed 18 Feb 2026 11:23:57 INFO  epoch 34 evaluating [time: 0.06s, valid_score: 0.042100]
+Wed 18 Feb 2026 11:23:57 INFO  valid result: 
+recall@10 : 0.0524    ndcg@10 : 0.0421
+Wed 18 Feb 2026 11:23:57 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:57 INFO  epoch 35 training [time: 0.02s, train loss: 2.3808]
+Wed 18 Feb 2026 11:23:57 INFO  epoch 35 evaluating [time: 0.05s, valid_score: 0.042200]
+Wed 18 Feb 2026 11:23:57 INFO  valid result: 
+recall@10 : 0.0515    ndcg@10 : 0.0422
+Wed 18 Feb 2026 11:23:57 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:57 INFO  epoch 36 training [time: 0.01s, train loss: 2.3591]
+Wed 18 Feb 2026 11:23:57 INFO  epoch 36 evaluating [time: 0.05s, valid_score: 0.044400]
+Wed 18 Feb 2026 11:23:57 INFO  valid result: 
+recall@10 : 0.0533    ndcg@10 : 0.0444
+Wed 18 Feb 2026 11:23:57 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:57 INFO  epoch 37 training [time: 0.01s, train loss: 2.3344]
+Wed 18 Feb 2026 11:23:57 INFO  epoch 37 evaluating [time: 0.05s, valid_score: 0.045500]
+Wed 18 Feb 2026 11:23:57 INFO  valid result: 
+recall@10 : 0.0533    ndcg@10 : 0.0455
+Wed 18 Feb 2026 11:23:57 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:57 INFO  epoch 38 training [time: 0.01s, train loss: 2.3116]
+Wed 18 Feb 2026 11:23:57 INFO  epoch 38 evaluating [time: 0.04s, valid_score: 0.046700]
+Wed 18 Feb 2026 11:23:57 INFO  valid result: 
+recall@10 : 0.0542    ndcg@10 : 0.0467
+Wed 18 Feb 2026 11:23:57 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:57 INFO  epoch 39 training [time: 0.01s, train loss: 2.2849]
+Wed 18 Feb 2026 11:23:57 INFO  epoch 39 evaluating [time: 0.04s, valid_score: 0.047700]
+Wed 18 Feb 2026 11:23:57 INFO  valid result: 
+recall@10 : 0.0556    ndcg@10 : 0.0477
+Wed 18 Feb 2026 11:23:57 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:57 INFO  epoch 40 training [time: 0.01s, train loss: 2.2598]
+Wed 18 Feb 2026 11:23:57 INFO  epoch 40 evaluating [time: 0.05s, valid_score: 0.048500]
+Wed 18 Feb 2026 11:23:57 INFO  valid result: 
+recall@10 : 0.0556    ndcg@10 : 0.0485
+Wed 18 Feb 2026 11:23:57 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:57 INFO  epoch 41 training [time: 0.01s, train loss: 2.2331]
+Wed 18 Feb 2026 11:23:57 INFO  epoch 41 evaluating [time: 0.05s, valid_score: 0.048700]
+Wed 18 Feb 2026 11:23:57 INFO  valid result: 
+recall@10 : 0.0557    ndcg@10 : 0.0487
+Wed 18 Feb 2026 11:23:57 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:57 INFO  epoch 42 training [time: 0.01s, train loss: 2.2075]
+Wed 18 Feb 2026 11:23:57 INFO  epoch 42 evaluating [time: 0.05s, valid_score: 0.048800]
+Wed 18 Feb 2026 11:23:57 INFO  valid result: 
+recall@10 : 0.0553    ndcg@10 : 0.0488
+Wed 18 Feb 2026 11:23:57 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:57 INFO  epoch 43 training [time: 0.01s, train loss: 2.1787]
+Wed 18 Feb 2026 11:23:57 INFO  epoch 43 evaluating [time: 0.05s, valid_score: 0.049100]
+Wed 18 Feb 2026 11:23:57 INFO  valid result: 
+recall@10 : 0.0553    ndcg@10 : 0.0491
+Wed 18 Feb 2026 11:23:57 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:57 INFO  epoch 44 training [time: 0.01s, train loss: 2.1514]
+Wed 18 Feb 2026 11:23:57 INFO  epoch 44 evaluating [time: 0.05s, valid_score: 0.049500]
+Wed 18 Feb 2026 11:23:57 INFO  valid result: 
+recall@10 : 0.0557    ndcg@10 : 0.0495
+Wed 18 Feb 2026 11:23:57 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:57 INFO  epoch 45 training [time: 0.01s, train loss: 2.1227]
+Wed 18 Feb 2026 11:23:57 INFO  epoch 45 evaluating [time: 0.05s, valid_score: 0.050700]
+Wed 18 Feb 2026 11:23:57 INFO  valid result: 
+recall@10 : 0.0581    ndcg@10 : 0.0507
+Wed 18 Feb 2026 11:23:57 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:58 INFO  epoch 46 training [time: 0.01s, train loss: 2.0940]
+Wed 18 Feb 2026 11:23:58 INFO  epoch 46 evaluating [time: 0.04s, valid_score: 0.051700]
+Wed 18 Feb 2026 11:23:58 INFO  valid result: 
+recall@10 : 0.0581    ndcg@10 : 0.0517
+Wed 18 Feb 2026 11:23:58 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:58 INFO  epoch 47 training [time: 0.01s, train loss: 2.0694]
+Wed 18 Feb 2026 11:23:58 INFO  epoch 47 evaluating [time: 0.04s, valid_score: 0.052700]
+Wed 18 Feb 2026 11:23:58 INFO  valid result: 
+recall@10 : 0.0581    ndcg@10 : 0.0527
+Wed 18 Feb 2026 11:23:58 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:58 INFO  epoch 48 training [time: 0.01s, train loss: 2.0351]
+Wed 18 Feb 2026 11:23:58 INFO  epoch 48 evaluating [time: 0.04s, valid_score: 0.052800]
+Wed 18 Feb 2026 11:23:58 INFO  valid result: 
+recall@10 : 0.0581    ndcg@10 : 0.0528
+Wed 18 Feb 2026 11:23:58 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:58 INFO  epoch 49 training [time: 0.01s, train loss: 2.0097]
+Wed 18 Feb 2026 11:23:58 INFO  epoch 49 evaluating [time: 0.05s, valid_score: 0.054900]
+Wed 18 Feb 2026 11:23:58 INFO  valid result: 
+recall@10 : 0.0627    ndcg@10 : 0.0549
+Wed 18 Feb 2026 11:23:58 INFO  Saving current: None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:58 INFO  Loading model structure and parameters from None/BPR-Feb-18-2026_11-23-54.pth
+Wed 18 Feb 2026 11:23:59 INFO  The running environment of this training is as follows:
++-------------+----------------+
+| Environment |     Usage      |
++=============+================+
+| CPU         |    25.00 %     |
++-------------+----------------+
+| GPU         |   0.0 / 0.0    |
++-------------+----------------+
+| Memory      | 0.47 G/24.00 G |
++-------------+----------------+
+Wed 18 Feb 2026 11:23:59 INFO  best valid : OrderedDict([('recall@10', 0.0627), ('ndcg@10', 0.0549)])
+Wed 18 Feb 2026 11:23:59 INFO  test result: OrderedDict([('recall@10', 0.0637), ('ndcg@10', 0.0523)])
