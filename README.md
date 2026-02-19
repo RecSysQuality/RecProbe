@@ -146,6 +146,16 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
+# Customization
+You can customize RecBople and adapt it to your needs. Below we detail what you can customize and how.
+
+The LLMs for `semantic_drift, hybrid_burst, sentence_noise, reivew_burst` can be customized directly from the YAML files in the `config` folder.
+
+If some LLMs deserve custom implementations, prompts and setups, you can change them directly here:
+- for the `review_burst` you can change the `self._paraphrase` method in `injectors/interactions/review_injector.py` file.
+- for the `sentence_noise` you can change the `self._generate_pool` method in `injectors/interactions/review_injector.py` file.
+- for the `semantic_drift` you can change the `self._change_context` method in `injectors/interactions/hybrid_injector.py` file.
+- for the `hybrid_burst` you can change the `self._invert_sentiment` method in `injectors/interactions/hybrid_injector.py` file.
 
 
 
