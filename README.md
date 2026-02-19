@@ -106,7 +106,7 @@ Then, on a new browser window, connect to `http://localhost:8501`
 
 Once saved the configuration, on a new terminal window run:
 ```
-docker run --rm  -ti --gpus '"device=1"' --name recprobe-container -v ./src/:/code/src/ recprobe:latest python3 main.py --profile=rating --noise_injection=rating_burst --baselines
+docker run --rm  -ti --gpus '"device=1"' --name recprobe-container -v ./src/:/code/src/ recprobe:latest python3 main.py  --baselines
 ```
 
 ### Run with manual YAML Configuration
