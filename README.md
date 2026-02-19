@@ -103,6 +103,12 @@ If you want to use the user inteface to configure RecProbe and inject noise:
 docker run --rm  -ti -p 8501:8501  --name recprobe-container -v ./src/:/code/src/ recprobe:latest streamlit run streamlit/str.py --server.address 0.0.0.0
 ```
 Then, on a new browser window, connect to `http://localhost:8501`
+
+Once saved the configuration, on a new terminal window run:
+```
+docker run --rm  -ti --gpus '"device=1"' --name recprobe-container -v ./src/:/code/src/ recprobe:latest python3 main.py --profile=rating --noise_injection=rating_burst --baselines
+```
+
 ### Run with manual YAML Configuration
 If you configured your YAML manually, run the container:
 ```
