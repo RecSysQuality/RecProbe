@@ -2,7 +2,7 @@ budget: 1000 # budget of ratings to add/remove/corrupt
 avoid_duplicates: true # if true, avoid adding duplicate ratings (same user-item pair) -- true for human-based operations
 
 rating_burst:
-  operation: remove                      # add is default
+  operation: add                      # add is default
   target: item                        # item or user
   selection_strategy: top         # uniform | top | least  -- top (least) means focusing on most (least) active users or popular items
 #  hubs: 100                           # maximum number of hubs created with the provided budget -- the least, the higher the hubs will be
