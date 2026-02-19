@@ -8,8 +8,9 @@ RecProbe is currently under review as a resource paper at SIGIR 2026.
 
 # :bookmark: Outline
 1. [Before starting](#before-starting)
-4. [Configuration](#recprobe-configuration)
-5. [Installation and Usage](#installation-and-usage)
+2. [Configuration](#recprobe-configuration)
+3. [Installation and Usage](#installation-and-usage)
+4. [Customization](#customization)
    
 
 
@@ -87,7 +88,7 @@ The evaluation results, together with the comparison table, are all available at
 
 
 
-# Installation and usage
+# :whale: Installation and usage
 Once configured the YAML files and added the datasets in the data folder, follow these steps to install and use RecProbe.
 ## Install from Docker
 RecProbe is distributed as a docker image in order to provide easy deployment independently of the host operative system and infrastructure. 
@@ -134,5 +135,7 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
+
+# :computer: Customization
 
 
