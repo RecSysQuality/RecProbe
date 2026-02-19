@@ -51,13 +51,13 @@ def main():
     parser.add_argument(
         "--profile",
         choices=["rating", "review", "hybrid",""],
-        default="hybrid",
+        default="rating",
         help="Noise profile",
     )
 
     parser.add_argument(
         "--noise_injection",
-        default="hybrid_burst",
+        default="rating_burst",
         help='Noise injection (called "context" in the config files)',
     )
 

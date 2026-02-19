@@ -1,0 +1,14 @@
+2026-02-19 18:37:27,164 | INFO | Loading streamlit config...
+2026-02-19 18:37:27,171 | INFO | Loading JSONL file in chunks from /Users/ornellairrera/PycharmProjects/RecProbe/src/data/input/amazon_All_Beauty/All_Beauty.jsonl
+2026-02-19 18:37:33,921 | INFO | Finished loading JSONL file from /Users/ornellairrera/PycharmProjects/RecProbe/src/data/input/amazon_All_Beauty/All_Beauty.jsonl
+2026-02-19 18:37:35,600 | INFO | Extracting 20-core from the dataset
+2026-02-19 18:37:36,299 | INFO | Finished extracting 20-core. Remaining records: 0
+2026-02-19 18:37:36,477 | INFO | Computing stats on clean data...
+2026-02-19 18:37:36,477 | INFO | Loaded df with 0 records
+2026-02-19 18:37:36,477 | INFO | Unique users: 0, Unique items: 0
+
+
+2026-02-19 18:37:36,477 | INFO | Total interactions: 0
+
+
+2026-02-19 18:37:36,478 | INFO | You have to provide a dataset!

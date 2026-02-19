@@ -1,0 +1,123 @@
+2026-02-17 12:05:40,709 | INFO | Loading JSONL file in chunks from /Users/ornellairrera/PycharmProjects/RecProbe/src/data/input/amazon_All_Beauty/All_Beauty.jsonl
+2026-02-17 12:05:47,449 | INFO | Finished loading JSONL file from /Users/ornellairrera/PycharmProjects/RecProbe/src/data/input/amazon_All_Beauty/All_Beauty.jsonl
+2026-02-17 12:05:49,166 | INFO | Extracting 3-core from the dataset
+2026-02-17 12:05:50,029 | INFO | Finished extracting 3-core. Remaining records: 9079
+2026-02-17 12:05:50,160 | INFO | Computing stats on clean data...
+2026-02-17 12:05:50,160 | INFO | Loaded df with 9079 records
+2026-02-17 12:05:50,162 | INFO | Unique users: 1266, Unique items: 1473
+
+
+2026-02-17 12:05:50,168 | INFO | Total interactions: 9079
+
+
+2026-02-17 12:05:50,171 | INFO | Rating stats:
+count    9079.000000
+mean        4.325697
+std         0.949479
+min         1.000000
+25%         4.000000
+50%         5.000000
+75%         5.000000
+max         5.000000
+Name: rating, dtype: float64
+
+
+2026-02-17 12:05:50,172 | INFO | Rating value counts:
+rating
+1     186
+2     324
+3    1007
+4    2392
+5    5170
+Name: count, dtype: int64
+
+
+2026-02-17 12:05:50,172 | INFO | Average items per user:
+7.17
+
+
+2026-02-17 12:05:50,172 | INFO | Average users per item:
+6.16
+
+
+2026-02-17 12:05:50,172 | INFO | Max items per user:
+126.00
+
+
+2026-02-17 12:05:50,172 | INFO | Max users per item:
+45.00
+
+
+2026-02-17 12:05:50,172 | INFO | Sparsity of the dataset: 
+0.995131
+
+
+2026-02-17 12:05:50,172 | INFO | Saving clean training DataFrame to CSV at /Users/ornellairrera/PycharmProjects/RecProbe/src/data/output/amazon_All_Beauty/train.csv
+2026-02-17 12:05:50,173 | INFO | Saving clean test DataFrame to CSV at /Users/ornellairrera/PycharmProjects/RecProbe/src/data/output/amazon_All_Beauty/test.csv
+2026-02-17 12:05:50,173 | INFO | Saving clean validation DataFrame to CSV at /Users/ornellairrera/PycharmProjects/RecProbe/src/data/output/amazon_All_Beauty/validation.csv
+2026-02-17 12:05:50,811 | INFO | Train set with 6547 rows
+2026-02-17 12:05:50,812 | INFO | Loaded df with 6547 records
+2026-02-17 12:05:50,813 | INFO | Unique users: 1266, Unique items: 1422
+
+
+2026-02-17 12:05:50,813 | INFO | Total interactions: 6547
+
+
+2026-02-17 12:05:50,813 | INFO | Total noisy interactions: 0
+
+
+2026-02-17 12:05:50,813 | INFO | Test set with 1266 rows
+2026-02-17 12:05:50,813 | INFO | Loaded df with 1266 records
+2026-02-17 12:05:50,814 | INFO | Unique users: 1266, Unique items: 719
+
+
+2026-02-17 12:05:50,814 | INFO | Total interactions: 1266
+
+
+2026-02-17 12:05:50,814 | INFO | Total noisy interactions: 0
+
+
+2026-02-17 12:05:50,814 | INFO | Validation set with 1266 rows
+2026-02-17 12:05:50,814 | INFO | Loaded df with 1266 records
+2026-02-17 12:05:50,815 | INFO | Unique users: 1266, Unique items: 781
+
+
+2026-02-17 12:05:50,815 | INFO | Total interactions: 1266
+
+
+2026-02-17 12:05:50,815 | INFO | Total noisy interactions: 0
+
+
+2026-02-17 12:05:50,815 | INFO | Computing stats on clean split data...
+2026-02-17 12:08:32,221 | INFO | Saving noisy DataFrame to CSV at /Users/ornellairrera/PycharmProjects/RecProbe/src/data/output/amazon_All_Beauty/train_noisy_review_random_inconsistencies.csv
+2026-02-17 12:08:38,246 | INFO | Loaded df with 6447 records
+2026-02-17 12:08:38,248 | INFO | Unique users: 1253, Unique items: 1418
+
+
+2026-02-17 12:08:38,248 | INFO | Total interactions: 6447
+
+
+2026-02-17 12:08:38,248 | INFO | Total noisy interactions: 0
+
+
+2026-02-17 12:08:38,248 | INFO | Loaded df with 1253 records
+2026-02-17 12:08:38,249 | INFO | Unique users: 1253, Unique items: 769
+
+
+2026-02-17 12:08:38,249 | INFO | Total interactions: 1253
+
+
+2026-02-17 12:08:38,249 | INFO | Total noisy interactions: 0
+
+
+2026-02-17 12:08:38,249 | INFO | Loaded df with 1253 records
+2026-02-17 12:08:38,250 | INFO | Unique users: 1253, Unique items: 713
+
+
+2026-02-17 12:08:38,250 | INFO | Total interactions: 1253
+
+
+2026-02-17 12:08:38,250 | INFO | Total noisy interactions: 0
+
+
+2026-02-17 12:08:38,250 | INFO | noisy df saved.

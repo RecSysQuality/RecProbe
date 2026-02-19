@@ -109,6 +109,8 @@ def load_hybrid_config(path: str = "files/config_hybrid.yaml",context: str = 'ra
         filtered_dict['avoid_duplicates'] = cfg_dict['avoid_duplicates']
         if 'preserve_degree_distribution' in keys:
             filtered_dict['avoid_duplicates'] = cfg_dict['avoid_duplicates']
+    else:
+        filtered_dict = cfg_dict
 
     return from_dict(
         data_class=RatingReviewConfig,

@@ -125,7 +125,7 @@ class RatingConfig:
 def load_rating_config(path: str = "files/config_rating.yaml",context: str = 'random_inconsistencies',streamlit: bool = False) -> RatingConfig:
     with open(path, "r") as f:
         cfg_dict = yaml.safe_load(f)
-        #cfg_dict['context'] = context
+        cfg_dict['context'] = context
     if streamlit:
         cfg_dict['context'] = "timestamp_corruption"
 
@@ -151,6 +151,8 @@ def load_rating_config(path: str = "files/config_rating.yaml",context: str = 'ra
         filtered_dict['avoid_duplicates'] = cfg_dict['avoid_duplicates']
         if 'preserve_degree_distribution' in keys:
             filtered_dict['avoid_duplicates'] = cfg_dict['avoid_duplicates']
+    else:
+        filtered_dict = cfg_dict
 
     return from_dict(
         data_class=RatingConfig,
