@@ -59,7 +59,7 @@ class HybridNoiseInjector(BaseNoiseInjector):
         other = 'item_id' if target == 'user_id' else 'user_id'
         df = sample_reviews(df, noise_config)
         nodes = ordered_nodes(df, target, noise_config.selection_strategy)
-        if noise_config.modify == 'rating':
+        if noise_config.flip == 'rating':
             return self._corrupt_ratings(df, nodes, target, other, config,noise_config)
         else:
             return self._corrupt_reviews(df, nodes, target, other, config,noise_config)

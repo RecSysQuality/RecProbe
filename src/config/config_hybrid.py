@@ -29,7 +29,7 @@ class TemporalIntervalConfig:
 class RatingReviewNoiseConfig:
     target: str = "item"                # user | item | NA
     operation: str = "corrupt"
-    modify: str = "rating"              # user | item | NA
+    flip: str = "rating"              # user | item | NA
     selection_strategy: str = "uniform" # uniform | popularity_based
     max_reviews_per_node: float = 50
     min_reviews_per_node: float = 1
@@ -41,7 +41,7 @@ class RatingReviewNoiseConfig:
 class RatingReviewNoiseConfig:
     target: str = "item"                # user | item | NA
     operation: str = "corrupt"
-    modify: str = "rating"              # user | item | NA
+    flip: str = "rating"              # user | item | NA
     selection_strategy: str = "uniform" # uniform | popularity_based
     max_reviews_per_node: float = 50
     min_reviews_per_node: float = 1

@@ -14,12 +14,12 @@ st.title("🛡️ RecProbe")
 st.sidebar.header("📦 Base Configuration")
 
 # Dataset
-dataset_name = st.sidebar.text_input("Dataset name", "yelp")
-dataset_path = st.sidebar.text_input("Dataset path", "data/yelp")
+dataset_name = st.sidebar.text_input("Dataset name", "amazon_All_Beauty")
+dataset_path = st.sidebar.text_input("Dataset path", "data/input/amazon_All_Beauty")
 
 # Input files
 st.sidebar.subheader("📥 Input Files")
-reviews_file = st.sidebar.text_input("Reviews file name", "yelp_academic_dataset_review")
+reviews_file = st.sidebar.text_input("Reviews file name", "All_Beauty")
 reviews_format = st.sidebar.selectbox("Reviews format", ["csv", "json"], index=1)
 reviews_sep = st.sidebar.text_input("Reviews separator", ",")
 
@@ -56,25 +56,14 @@ split_strategy = st.sidebar.selectbox(
 st.sidebar.subheader("🛠️ Global Settings")
 drop_duplicates = st.sidebar.checkbox("Drop duplicates", True)
 seed = st.sidebar.number_input("Random seed", value=42)
+evaluation = st.sidebar.selectbox(
+    "Evaluation",
+    ["cornac", "recbole", "custom"])
 verbose = st.sidebar.checkbox("Verbose logging", True)
 
-# # Context selection
-# context = st.sidebar.selectbox(
-#     "Context",
-#     [
-#         "semantic_drift",
-#         "rating_review_burst",
-#         "realistic_noise",
-#         "item_burst_noise",
-#         "user_burst_noise",
-#         "remove_reviews",
-#         "review_burst_noise",
-#         "sentence_noise",
-#         "timestamp_corruption",
-#     ],
-# )
 
 budget = st.sidebar.number_input("Budget", 1, 1_000_000, 1000)
+avoid_duplicates = st.sidebar.checkbox("Avoid duplicated interactions",True)
 
 # --------------------------------------------------
 # Shared Blocks
@@ -90,9 +79,13 @@ def temporal_interval_block(default_start=1609459200, default_end=1640995200):
 def rating_behavior_block(default="gaussian"):
     col1, col2, col3 = st.columns(3)
     with col1:
-        min_rating_val = st.slider("Min rating", 1, 5, 1)
+        #min_rating_val = st.slider("Min rating", 1, 100, 1)
+        min_rating_val = st.number_input("Min rating", value=1)
+
     with col2:
-        max_rating_val = st.slider("Max rating", 1, 5, 5)
+        #max_rating_val = st.slider("Max rating", 1, 100, 5)
+        max_rating_val = st.number_input("Max rating", value=5)
+
     with col3:
         sampling = st.selectbox("Sampling", ["gaussian", "uniform"],
                                 index=0 if default == "gaussian" else 1)
@@ -109,7 +102,7 @@ def rating_behavior_block(default="gaussian"):
 
 def build_semantic_drift():
     st.header("🧠 Semantic Drift")
-    operation = st.selectbox("Operation", ["add", "remove", "corrupt"], index=2)
+    operation = "corrupt"
     target = st.selectbox("Target", ["item", "user"])
     selection_strategy = st.selectbox("Selection strategy", ["uniform", "top", "least"])
     max_reviews = st.number_input("Max reviews per node", value=50)
@@ -156,8 +149,47 @@ def build_rating_review_burst():
 
 
 def build_realistic_noise():
-    st.header("🎯 Realistic Noise")
-    operation = st.selectbox("Operation", ["add", "remove"], index=0)
+    st.header("🎯 Random inconsistencies")
+    #operation = st.selectbox("Operation", ["add", "remove"], index=0)
+    target = st.selectbox("Target", ["item", "user"])
+    selection_strategy = st.selectbox("Selection strategy", ["uniform", "top", "least"])
+    max_ratings = st.number_input("Max ratings per node", value=100)
+    min_ratings = st.number_input("Min ratings per node", value=10)
+    preserve_degree = st.checkbox("Preserve degree distribution", True)
+    if profile == "hybrid":
+        operation = "corrupt"
+        #st.write("Profile is hybrid → operation forced to 'corrupt'")
+        flip = st.selectbox("Flip", ["rating", "Review"], index=0)
+        return {
+            "operation": operation,
+            "target": target,
+            "flip": flip,
+            "selection_strategy": selection_strategy,
+            "max_ratings_per_node": max_ratings,
+            "min_ratings_per_node": min_ratings,
+            "preserve_degree_distribution": preserve_degree,
+            "rating_behavior": rating_behavior_block(),
+            "temporal_interval": temporal_interval_block(),
+        }
+    else:
+        operation = st.selectbox("Operation", ["add", "remove"], index=0)
+        return {
+            "operation": operation,
+            "target": target,
+            "selection_strategy": selection_strategy,
+            "max_ratings_per_node": max_ratings,
+            "min_ratings_per_node": min_ratings,
+            "preserve_degree_distribution": preserve_degree,
+            "rating_behavior": rating_behavior_block(),
+            "temporal_interval": temporal_interval_block(),
+        }
+
+
+
+
+def build_realistic_noise_hybrid():
+    st.header("🎯 Random inconsistencies")
+    operation = "corrupt"
     target = st.selectbox("Target", ["item", "user"])
     selection_strategy = st.selectbox("Selection strategy", ["uniform", "top", "least"])
     max_ratings = st.number_input("Max ratings per node", value=100)
@@ -174,7 +206,6 @@ def build_realistic_noise():
         "rating_behavior": rating_behavior_block(),
         "temporal_interval": temporal_interval_block(),
     }
-
 
 def build_rating_burst_noise():
     st.header("⭐ Rating Burst")
@@ -280,7 +311,8 @@ def build_review_burst_noise():
     review_text = st.text_area("Review text for near duplicates",
                                "This product is absolutely one of my favourites! It lasts all day and the quality remains great from morning to night, which is something I really value when I use a product like this. I have used it many times over a long period of time, and every time the experience has been very good, very reliable, and very satisfying. The performance is excellent, the quality is excellent, and overall it feels like a great choice for everyday use, even after many hours, even after repeated use, and even when expectations are high. I would definitely recommend it because the product works well, works consistently, and works exactly as expected.")
     title = st.text_input("Review title", "The product you cannot live without")
-    rating = st.slider("Rating for near duplicate reviews", 1, 5, 1)
+    #rating = st.slider("Rating for near duplicate reviews", 1, 100, 1)
+    rating = st.slider("Rating for near duplicate reviews", value=5)
 
     return {
         "operation": operation,
@@ -332,9 +364,9 @@ def build_sentence_noise():
 profile = st.sidebar.selectbox("Profile", ["rating", "review", "hybrid"], index=0)
 
 profile_context_map = {
-    "rating": ["realistic_noise", "rating_burst", "timestamp_corruption"],
-    "review": ["realistic_noise", "review_burst", "sentence_noise"],
-    "hybrid": ["realistic_noise", "hybrid_burst", "semantic_drift"],
+    "rating": ["random_inconsistencies", "rating_burst", "timestamp_corruption"],
+    "review": ["random_inconsistencies", "review_burst", "sentence_noise"],
+    "hybrid": ["random_inconsistencies", "hybrid_burst", "semantic_drift"],
 }
 
 available_contexts = profile_context_map[profile]
@@ -346,7 +378,7 @@ context = st.sidebar.selectbox("Context", available_contexts)
 builder_map = {
     "semantic_drift": build_semantic_drift,
     "hybrid_burst": build_rating_review_burst,
-    "realistic_noise": build_realistic_noise,
+    "random_inconsistencies": build_realistic_noise,
     "rating_burst": build_rating_burst_noise,
     "timestamp_corruption": build_timestamp_corruption,
     "remove_reviews": build_remove_reviews,
@@ -381,9 +413,11 @@ config = {
     "drop_duplicates": drop_duplicates,
     "dataset": dataset_name,
     "random_seed": seed,
+    "evaluation": evaluation,
     "verbose": verbose,
     "context": context,
     "budget": budget,
+    "avoid_duplicates":avoid_duplicates,
     context: context_block,
 }
 

@@ -6,7 +6,7 @@ avoid_duplicates: true    # evita duplicati (stesso user-item pair) se true
 random_inconsistencies:
   operation: corrupt
   target: item                       # item | user
-  modify: review                    # rating | review. If rating, where the review is positive and the rating is positive, the rating is turned negative -- i.e., from 5 to 1. If review, for a positive rating, we turn the review negative
+  flip: review                    # rating | review. If rating, where the review is positive and the rating is positive, the rating is turned negative -- i.e., from 5 to 1. If review, for a positive rating, we turn the review negative
   selection_strategy: top        # uniform | top | least
   max_reviews_per_node: 10           # max number of reviews modified per node
   min_reviews_per_node: 1            # min number of reviews modified per node
