@@ -160,10 +160,13 @@ def build_realistic_noise():
         operation = "corrupt"
         #st.write("Profile is hybrid → operation forced to 'corrupt'")
         flip = st.selectbox("Flip", ["rating", "Review"], index=0)
+        model = st.text_input("Model", "Qwen/Qwen2.5-1.5B-Instruct")
+
         return {
             "operation": operation,
             "target": target,
             "flip": flip,
+            "model": model,
             "selection_strategy": selection_strategy,
             "max_ratings_per_node": max_ratings,
             "min_ratings_per_node": min_ratings,
