@@ -10,7 +10,6 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Imposta python3.10 come default
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1
 
 
@@ -21,10 +20,11 @@ ENV PYTHONPATH=/code
 COPY . /code
 COPY requirements.txt .
 
-# torch 2.10.0 GPU
-RUN pip install --no-cache-dir -r requirements.txt
+# the following to let recbole and cognac coexist, feel free to move to requirements if only one of them is needed.
+RUN pip install --no-cache-dir Cython numpy==1.25.2 scipy
+RUN pip install --no-cache-dir --no-build-isolation -r requirements.txt
 RUN pip install --no-cache-dir dgl -f https://data.dgl.ai/wheels/cu124/repo.html
-RUN pip install torch==2.10.0 --index-url https://download.pytorch.org/whl/cu124
+RUN pip install torch==2.5.1 --index-url https://download.pytorch.org/whl/cu124
 
 
 ENV PATH="/root/.local/bin:${PATH}"

@@ -103,9 +103,13 @@ def main():
             "you can also leave the two params unset and compute the baselines."
         )
 
+
     log_file=f"{BASE_DIR}/logs/noise_injector_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
     logger = get_logger(log_file=log_file, level=logging.INFO)
     config = load_config(CONFIG_PATH, profile=profile, context=noise_injection)
+    logger.info("config")
+    logger.info(config)
+
     set_seed(config.random_seed)
 
     loader = DatasetLoader(logger=logger,config=config)
@@ -174,5 +178,4 @@ def main():
     exit(0)
 
 if __name__ == "__main__":
-
     main()

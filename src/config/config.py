@@ -133,7 +133,6 @@ def load_streamlit_config(
     else:
         raise ValueError(f"Unknown noise_profile: {noise_profile}")
 
-
     return Config(
         input=input_cfg,
         output=output_cfg,
