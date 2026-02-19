@@ -10,7 +10,6 @@ RecProbe is currently under review as a resource paper at SIGIR 2026.
 1. [Before starting](#before-starting)
 2. [Configuration](#recprobe-configuration)
 3. [Installation and Usage](#installation-and-usage)
-4. [Customization](#customization)
    
 
 
@@ -142,6 +141,5 @@ pip install -r requirements.txt
 ```
 
 
-# :computer: Customization
 
 
