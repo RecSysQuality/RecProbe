@@ -115,7 +115,7 @@ docker run --rm  -ti --gpus '"device=1"' --name recprobe-container -v ./src/data
 ```
 If you want to run the container with no gpu, just avoid the ```--gpus``` parameter.
 
-Profile choices: rating, review, hybrid
+Profile choices:  `rating, review, hybrid`
 
 noise_injection choices: 
    - if profile is  `rating`: `random_inconsistencies, rating_burst, timestamp_corruption`
