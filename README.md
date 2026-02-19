@@ -79,7 +79,10 @@ The evaluation module enables users to compare the performance of a set of basel
 
 - **Cornac evaluation**. Users can evaluate baseline models implemented in Cornac by specifying the desired methods and evaluation metrics directly in the corresponding YAML configuration file. Each baseline can be configured by setting its parameters and selecting the metrics to compute. To use Cornac evaluation, the user should use the `src/baselines/cornac/config/config.yaml` file where is asked to specify the models (and the related hyperparameters such as the number of epochs, the learning rate and so on) and the metrics for the evaluation. Then, in the `src/baselines/cornac/mapper.py` the user must provide a mapping from the models and metrics names specified in the YAML, to models in Cornac. This is necessary because we map strings to actual implementations.
 
-- **RecBole evaluation**. Users can evaluate models supported by RecBole by defining the methods, hyperparameters, and evaluation metrics within the dedicated YAML configuration files. The framework automatically loads the specified configurations and performs the evaluation accordingly.
+- **RecBole evaluation**. Users can evaluate models supported by RecBole by defining the methods, hyperparameters, and evaluation metrics within the dedicated YAML configuration files. The framework automatically loads the specified configurations and performs the evaluation accordingly. To use RecBole, the user must provide one or more config files, one for each baseline, as detailed in the original RecBole documentation. Once provided the files in `src/baselines/recbole/config/<name>.yaml`, RecProbe will process them and output the RecBole results.
+
+
+The evaluation results, together with the comparison table, are all available at `src/baselines/results` folder.
 
 
 
