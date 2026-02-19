@@ -4,6 +4,7 @@ import yaml
 from dacite import from_dict
 #from numpy.core.numeric import infty
 
+from typing import List
 
 @dataclass
 class RatingBehaviorConfig:
@@ -75,6 +76,10 @@ class SentecneNoiseConfig:
     noise_type: str = 'shuffle'
     intensity: str = 'low'
    # vocabulary_file: str = None
+    vocabulary: List[str] = field(default_factory=lambda: [
+        "shipping", "breakfast", "home", "night", "sun",
+        "dinner", "lunch", "dog", "pets"
+    ])
     temporal_behavior: TemporalIntervalConfig = field(default_factory=TemporalIntervalConfig)
     rating_behavior: RatingBehaviorConfig = field(default_factory=RatingBehaviorConfig)
 

@@ -1,4 +1,4 @@
-budget: 10        # total number of reviews to add/remove/corrupt
+budget: 5        # total number of reviews to add/remove/corrupt
 avoid_duplicates: true    # evita duplicati (stesso user-item pair) se true
 
 

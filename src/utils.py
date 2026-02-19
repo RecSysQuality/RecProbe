@@ -41,6 +41,37 @@ def per_node_budget(node_size, total_left,min_per_node,max_per_node):
     )
     return min(n, node_size-1, total_left)
 
+def sample_ratings_optimized(mu, sigma, n, config):
+
+    if config.rating_behavior.sampling_strategy == 'gaussian':
+
+        if not np.isfinite(mu):
+            mu = (config.rating_behavior.min_rating +
+                  config.rating_behavior.max_rating) / 2
+
+        if not np.isfinite(sigma) or sigma == 0:
+            sigma = 1.0
+
+        r = np.random.normal(mu, sigma, size=n)
+
+        r = np.nan_to_num(
+            r,
+            nan=mu,
+            posinf=config.rating_behavior.max_rating,
+            neginf=config.rating_behavior.min_rating
+        )
+
+        return np.clip(
+            np.rint(r),
+            config.rating_behavior.min_rating,
+            config.rating_behavior.max_rating
+        ).astype(int)
+
+    return np.random.randint(
+        config.rating_behavior.min_rating,
+        config.rating_behavior.max_rating + 1,
+        size=n
+    )
 
 def sample_ratings(base_ratings, n, config):
 

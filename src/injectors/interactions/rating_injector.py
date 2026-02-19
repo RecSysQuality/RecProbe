@@ -40,94 +40,115 @@ class RatingNoiseInjector(BaseNoiseInjector):
         nodes = ordered_nodes(df, target, noise_config.selection_strategy)
 
         if noise_config.operation == 'remove':
-            return self._remove_ratings(df,df_val, df_test, nodes, target,other, config,noise_config)
+            #return self._remove_ratings(df,df_val, df_test, nodes, target,other, config,noise_config)
+            return self._remove_ratings_optimized(df, nodes, target,other,noise_config)
 
         if noise_config.operation == 'add':
             return self._add_ratings(df, df_val, df_test, nodes, target, other, config,noise_config)
 
         raise ValueError(f"Unknown operation: {config.operation}")
 
-    # ==========================================================
-    # REMOVE
-    # ==========================================================
-    # def _remove_ratings(self, df, df_val, df_test, nodes, target, other, config, noise_config):
-    #     remaining = self.budget
-    #
-    #     # ---------- Precompute
-    #     degrees = df.groupby(target)[other].nunique().to_dict()
-    #     max_degree = max(degrees.values()) if degrees else 1
-    #
-    #     start_ts = parse_timestamp(noise_config.temporal_behavior.start_timestamp)
-    #     end_ts = parse_timestamp(noise_config.temporal_behavior.end_timestamp)
-    #
-    #     # group indices (velocissimo)
-    #     group_indices = df.groupby(target).indices
-    #
-    #     # rating array per nodo
-    #     rating_map = df.groupby(target)['rating'].apply(np.array).to_dict()
-    #     timestamp_arr = df['timestamp'].values
-    #
-    #     removed_idx = []
-    #
-    #     for node in nodes:
-    #         if remaining <= 0:
-    #             break
-    #
-    #         idx = group_indices.get(node)
-    #         if idx is None:
-    #             continue
-    #
-    #         node_ratings = rating_map.get(node, np.array([]))
-    #         node_timestamps = timestamp_arr[idx]
-    #
-    #         n = per_node_budget(
-    #             len(idx),
-    #             remaining,
-    #             noise_config.min_ratings_per_node,
-    #             noise_config.max_ratings_per_node
-    #         )
-    #
-    #         if n <= 0:
-    #             continue
-    #
-    #         if getattr(noise_config, 'preserve_degree_distribution', None):
-    #             factor = (max_degree - degrees.get(node, 0)) / max_degree
-    #             n = max(1, int(np.ceil(n * factor)))
-    #
-    #         n = min(n, len(idx), remaining)
-    #         if n <= 0:
-    #             continue
-    #
-    #         # sample ratings (array numpy)
-    #         sampled_ratings = sample_ratings(node_ratings, n, noise_config)
-    #
-    #         # ---------- candidates: boolean mask
-    #         mask = np.isin(node_ratings, sampled_ratings)
-    #
-    #         if start_ts != 0 and end_ts != 0:
-    #             mask &= (node_timestamps >= start_ts) & (node_timestamps <= end_ts)
-    #
-    #         candidate_idx = np.array(idx)[mask]
-    #
-    #         if len(candidate_idx) == 0:
-    #             continue
-    #
-    #         # campiona n tra i candidati
-    #         sampled_idx = np.random.choice(candidate_idx, size=min(len(candidate_idx), n), replace=False)
-    #
-    #         removed_idx.extend(sampled_idx)
-    #         remaining -= len(sampled_idx)
-    #
-    #     removed_idx = np.array(removed_idx)
-    #     removed = df.iloc[removed_idx]
-    #     df_new = df.drop(removed_idx)
-    #
-    #     return df_new, removed
+    def _remove_ratings_optimized(self, df, nodes, target, other, noise_config
+    ):
+        remaining = self.budget
+        removed_idx = []
 
-    def _remove_ratings(self, df, df_val, df_test, nodes, target, other, config, noise_config):
+        # --- Precompute una sola volta ---
+        groups = df.groupby(target).groups  # node -> index array
+
+        rating_stats = (
+            df.groupby(target)['rating']
+            .agg(['mean', 'std'])
+            .to_dict('index')
+        )
+
+        degrees = df.groupby(target)[other].nunique()
+        max_degree = degrees.max()
+        degrees_dict = degrees.to_dict()
+
+        start_ts = parse_timestamp(noise_config.temporal_behavior.start_timestamp)
+        end_ts = parse_timestamp(noise_config.temporal_behavior.end_timestamp)
+
+        # Cache colonne come numpy (molto più veloce)
+        ratings_col = df['rating'].values
+        timestamps_col = df['timestamp'].values
+
+        for node in nodes:
+            if remaining <= 0:
+                break
+
+            node_indices = groups.get(node)
+            if node_indices is None:
+                continue
+
+            node_size = len(node_indices)
+
+            n = per_node_budget(
+                node_size,
+                remaining,
+                noise_config.min_ratings_per_node,
+                noise_config.max_ratings_per_node
+            )
+
+            if n <= 0:
+                continue
+
+            if noise_config.preserve_degree_distribution:
+                deg = degrees_dict.get(node, 0)
+                factor = (max_degree - deg) / max_degree if max_degree > 0 else 1
+                n = max(1, int(np.ceil(n * factor)))
+
+            # --- Rating stats ---
+            stats = rating_stats.get(node)
+            if stats:
+                mu = stats['mean']
+                sigma = stats['std']
+            else:
+                mu = np.nan
+                sigma = np.nan
+
+            sampled_ratings = sample_ratings_optimized(
+                mu, sigma, n, noise_config
+            )
+
+            # --- Lavoriamo solo sugli indici del nodo ---
+            node_ratings = ratings_col[node_indices]
+
+            mask = np.isin(node_ratings, sampled_ratings)
+
+            if start_ts != 0 and end_ts != 0:
+                node_timestamps = timestamps_col[node_indices]
+                mask &= (node_timestamps >= start_ts) & (
+                        node_timestamps <= end_ts
+                )
+
+            candidates_idx = node_indices[mask]
+
+            if len(candidates_idx) == 0:
+                continue
+
+            k = min(len(candidates_idx), n, remaining)
+
+            sampled_idx = np.random.choice(
+                candidates_idx,
+                size=k,
+                replace=False
+            )
+
+            removed_idx.extend(sampled_idx)
+            remaining -= k
+
+        removed = df.loc[removed_idx]
+        return df.drop(removed_idx), removed
+
+    def _remove_ratings(self, df,  nodes, target, other, noise_config):
         removed_idx = []
         remaining = self.budget
-
+        rating_stats = (
+            df.groupby(target)['rating']
+            .agg(['mean', 'std'])
+            .to_dict('index')
+        )
         # Calcolo gradi una sola volta
         degrees = df.groupby(target)[other].nunique()
         max_degree = degrees.max()
@@ -162,7 +183,17 @@ class RatingNoiseInjector(BaseNoiseInjector):
                 n = max(1, int(np.ceil(n * factor)))
 
             # Selezione delle rating candidate
-            ratings = sample_ratings(node_df['rating'], n, noise_config)
+            stats = rating_stats.get(node, None)
+
+            if stats:
+                mu = stats['mean']
+                sigma = stats['std']
+            else:
+                mu = np.nan
+                sigma = np.nan
+            #ratings = sample_ratings(node_df['rating'], n, noise_config)
+            ratings = sample_ratings_optimized(mu, sigma, n, noise_config)
+
             candidates_mask = node_mask & df['rating'].isin(ratings) & time_mask
             candidates_idx = df.index[candidates_mask]
 
@@ -177,87 +208,53 @@ class RatingNoiseInjector(BaseNoiseInjector):
         removed = df.loc[removed_idx]
         return df.drop(removed_idx), removed
 
-    # def _remove_ratings(self, df,df_val,df_test, nodes, target, other, config,noise_config):
-    #     removed_idx = []
-    #     remaining = self.budget
-    #     degrees = df.groupby(target)[other].nunique()
-    #     max_degree = degrees.max()
-    #     start_ts = noise_config.temporal_behavior.start_timestamp
-    #     end_ts = noise_config.temporal_behavior.end_timestamp
-    #     start_ts = parse_timestamp(start_ts)
-    #     end_ts = parse_timestamp(end_ts)
-    #
-    #     grouped = df.groupby(target)
-    #     for node in nodes:
-    #         if remaining <= 0 or node not in grouped.groups:
-    #             continue
-    #
-    #         node_df = grouped.get_group(node)
-    #         n = per_node_budget(len(node_df), remaining,
-    #                             noise_config.min_ratings_per_node,
-    #                             noise_config.max_ratings_per_node)
-    #         if n <= 0:
-    #             continue
-    #
-    #         if noise_config.preserve_degree_distribution:
-    #             factor = (max_degree - degrees.get(node, 0)) / max_degree
-    #             n = max(1, int(np.ceil(n * factor)))
-    #
-    #
-    #
-    #         ratings = sample_ratings(node_df['rating'], n, noise_config)
-    #         candidates = node_df[node_df['rating'].isin(ratings)]
-    #
-    #         if start_ts != 0 and end_ts != 0:
-    #
-    #             candidates = node_df[
-    #                 (node_df['timestamp'] >= start_ts) &  # timestamp >= start
-    #                 (node_df['timestamp'] <= end_ts)  # timestamp <= end
-    #                 ]
-    #
-    #         sampled = candidates.sample(
-    #             n=min(len(candidates), n),
-    #             replace=False
-    #         )
-    #         removed_idx.extend(sampled.index)
-    #         remaining -= len(sampled)
-    #
-    #     removed = df.loc[removed_idx]
-    #     return df.drop(removed_idx), removed
 
     def _add_ratings(self, df, df_val, df_test, nodes, target, other, config, noise_config):
         remaining = self.budget
 
-        # ---------- PRECOMPUTE (una sola volta)
         all_other = df[other].unique()
-        all_other_set = set(all_other)
+        #all_other_set = set(all_other)
 
         # degrees
         degrees = df.groupby(target)[other].nunique().to_dict()
         max_degree = max(degrees.values()) if degrees else 1
 
-        # Mappa nodo -> set(other)
-        used_map = df.groupby(target)[other].agg(set).to_dict()
+        # used_map = df.groupby(target)[other].agg(set).to_dict()
+        #
+        # if df_val is not None:
+        #     val_map = df_val.groupby(target)[other].agg(set).to_dict()
+        #     for k, v in val_map.items():
+        #         used_map.setdefault(k, set()).update(v)
+        #
+        # if df_test is not None:
+        #     test_map = df_test.groupby(target)[other].agg(set).to_dict()
+        #     for k, v in test_map.items():
+        #         used_map.setdefault(k, set()).update(v)
+        dfs = [df]
 
         if df_val is not None:
-            val_map = df_val.groupby(target)[other].agg(set).to_dict()
-            for k, v in val_map.items():
-                used_map.setdefault(k, set()).update(v)
+            dfs.append(df_val)
 
         if df_test is not None:
-            test_map = df_test.groupby(target)[other].agg(set).to_dict()
-            for k, v in test_map.items():
-                used_map.setdefault(k, set()).update(v)
+            dfs.append(df_test)
 
-        # rating history per nodo (serve per sample_ratings)
-        rating_map = df.groupby(target)['rating'].apply(np.array).to_dict()
+        df_all = pd.concat(dfs, ignore_index=True)
 
-        # timestamp
+        used_map = (
+            df_all.groupby(target)[other]
+            .agg(set)
+            .to_dict()
+        )
+        #rating_map = df.groupby(target)['rating'].apply(np.array).to_dict()
+        rating_stats = (
+            df.groupby(target)['rating']
+            .agg(['mean', 'std'])
+            .to_dict('index')
+        )
         start_ts = parse_timestamp(noise_config.temporal_behavior.start_timestamp)
         end_ts = parse_timestamp(noise_config.temporal_behavior.end_timestamp)
         now_ts = int(pd.Timestamp.now().timestamp())
 
-        # ---------- ACCUMULATORI (no DataFrame nel loop)
         target_col = []
         other_col = []
         rating_col = []
@@ -270,13 +267,7 @@ class RatingNoiseInjector(BaseNoiseInjector):
 
             used = used_map.get(node, set())
 
-            if getattr(config, 'avoid_duplicates', False):
-                available = list(all_other_set - used)
-            else:
-                available = all_other
 
-            if not available:
-                continue
 
             n = np.random.randint(
                 noise_config.min_ratings_per_node,
@@ -287,6 +278,15 @@ class RatingNoiseInjector(BaseNoiseInjector):
                 factor = (max_degree - degrees.get(node, 0)) / max_degree
                 n = max(1, int(np.ceil(n * factor)))
 
+            if getattr(config, 'avoid_duplicates', False):
+                sampled = np.random.choice(all_other, size=n*2, replace=False)
+                available = [x for x in sampled if x not in used][:n]
+            else:
+                available = all_other
+
+            if not available or len(available) == 0:
+                continue
+
             n = min(n, len(available), remaining)
 
             if n <= 0:
@@ -294,11 +294,21 @@ class RatingNoiseInjector(BaseNoiseInjector):
 
             sampled_other = np.random.choice(available, size=n, replace=False)
 
-            sampled_ratings = sample_ratings(
-                rating_map.get(node, np.array([])),
-                n,
-                noise_config
-            )
+            # sampled_ratings = sample_ratings(
+            #     rating_map.get(node, np.array([])),
+            #     n,
+            #     noise_config
+            # )
+            stats = rating_stats.get(node, None)
+
+            if stats:
+                mu = stats['mean']
+                sigma = stats['std']
+            else:
+                mu = np.nan
+                sigma = np.nan
+
+            sampled_ratings = sample_ratings_optimized(mu, sigma, n, noise_config)
 
             if start_ts == 0 and end_ts == 0:
                 timestamps = np.full(n, now_ts, dtype=np.int64)
@@ -308,7 +318,6 @@ class RatingNoiseInjector(BaseNoiseInjector):
                         start_ts + (end_ts - start_ts) * rand
                 ).astype(np.int64)
 
-            # append vettoriale
             target_col.extend([node] * n)
             other_col.extend(sampled_other)
             rating_col.extend(sampled_ratings)
@@ -317,7 +326,6 @@ class RatingNoiseInjector(BaseNoiseInjector):
 
             remaining -= n
 
-        # ---------- COSTRUZIONE FINALE
         df['noise'] = False
 
         if target_col:
@@ -335,7 +343,7 @@ class RatingNoiseInjector(BaseNoiseInjector):
 
         return result, added
 
-    # def _add_ratings0(self, df, df_val, df_test, nodes, target, other, config,noise_config):
+    # def _add_ratings(self, df, df_val, df_test, nodes, target, other, config,noise_config):
     #     rows = []
     #     remaining = self.budget
     #     all_other = df[other].unique()
@@ -405,129 +413,118 @@ class RatingNoiseInjector(BaseNoiseInjector):
         nodes = ordered_nodes(df, target, noise_config.selection_strategy)
         return self._add_ratings(df,df_val,df_test, nodes, target, other, config,noise_config)
 
-    # # ==========================================================
-    # # TIMESTAMP CORRUPTION
-    # # ==========================================================
-    # def _timestamp_corruption(self, df):
-    #     noise_config = self.config.timestamp_corruption
-    #     target_col = 'user_id' if noise_config.target == 'user' else 'item_id'
-    #
-    #     df = df.copy()
-    #     df['noise'] = False
-    #
-    #     nodes = ordered_nodes(df, target_col, noise_config.selection_strategy)
-    #
-    #     remaining = self.budget
-    #
-    #     # ---------- PRECOMPUTE GROUP INDICES (velocissimo)
-    #     group_indices = df.groupby(target_col).indices
-    #
-    #     # ---------- PRECONVERT TIMESTAMP UNA VOLTA
-    #     timestamps = pd.to_datetime(df["timestamp"]).values
-    #
-    #     # accumulatori
-    #     corrupted_indices = []
-    #
-    #     for node in nodes:
-    #         if remaining <= 0:
-    #             break
-    #
-    #         idx = group_indices.get(node)
-    #         if idx is None:
-    #             continue
-    #
-    #         group_size = len(idx)
-    #
-    #         n = per_node_budget(
-    #             group_size,
-    #             remaining,
-    #             noise_config.min_ratings_per_node,
-    #             noise_config.max_ratings_per_node
-    #         )
-    #
-    #         if n <= 0:
-    #             continue
-    #
-    #         # 🔥 numpy sampling invece di pandas.sample
-    #         sampled_idx = np.random.choice(idx, size=n, replace=False)
-    #
-    #         corrupted_indices.append(sampled_idx)
-    #         remaining -= n
-    #
-    #     if not corrupted_indices:
-    #         return df, df.iloc[[]]
-    #
-    #     # ---------- CONCATENA UNA VOLTA SOLA
-    #     corrupted_indices = np.concatenate(corrupted_indices)
-    #
-    #     # ---------- SHIFT VETTORIALE
-    #     shifts = self._corrupt_vectorized(len(corrupted_indices), noise_config)
-    #
-    #     timestamps[corrupted_indices] = (
-    #             timestamps[corrupted_indices] + shifts
-    #     )
-    #
-    #     df.loc[corrupted_indices, "timestamp"] = timestamps[corrupted_indices]
-    #     df.loc[corrupted_indices, "noise"] = True
-    #
-    #     return df, df.loc[corrupted_indices]
-    #
-    # def _corrupt_vectorized(self, size, noise_config):
-    #     tb = noise_config.temporal_behavior
-    #     days_map = {"low": 7, "medium": 30, "high": 365}
-    #     max_days = np.random.randint(1, 10) * days_map.get(tb.intensity, 30)
-    #
-    #     if tb.corruption_mode == "uniform":
-    #         shifts = np.random.randint(-max_days, max_days + 1, size=size)
-    #     elif tb.corruption_mode == "forward":
-    #         shifts = np.random.randint(1, max_days + 1, size=size)
-    #     elif tb.corruption_mode == "backward":
-    #         shifts = -np.random.randint(1, max_days + 1, size=size)
-    #     else:
-    #         raise ValueError(f"Unknown corruption_mode: {tb.corruption_mode}")
-    #
-    #     return pd.to_timedelta(shifts, unit="D").values
-
     def _timestamp_corruption(self, df):
         noise_config = self.config.timestamp_corruption
         target_col = 'user_id' if noise_config.target == 'user' else 'item_id'
         nodes = ordered_nodes(df, target_col, noise_config.selection_strategy)
 
         remaining = self.budget
-        grouped = df.groupby(target_col)
+
+        # mapping nodo -> indici (molto più leggero di get_group)
+        groups = df.groupby(target_col).groups
+
         df['noise'] = False
+
+        timestamps = df['timestamp'].values  # cache numpy
+        noise_mask = np.zeros(len(df), dtype=bool)
+
         for node in nodes:
-            if remaining <= 0 or node not in grouped.groups:
+            if remaining <= 0:
+                break
+
+            node_indices = groups.get(node)
+            if node_indices is None:
                 continue
 
-            node_df = grouped.get_group(node)
-            n = per_node_budget(len(node_df), remaining,
-                                noise_config.min_ratings_per_node,
-                                noise_config.max_ratings_per_node)
+            node_size = len(node_indices)
+
+            n = per_node_budget(
+                node_size,
+                remaining,
+                noise_config.min_ratings_per_node,
+                noise_config.max_ratings_per_node
+            )
+
             if n <= 0:
                 continue
 
-            sampled = node_df.sample(n=n, replace=False)
+            k = min(n, node_size, remaining)
 
-            df.loc[sampled.index, 'timestamp'] = self._corrupt(sampled,noise_config)
-            df.loc[sampled.index, 'noise'] = True
-            remaining -= n
+            sampled_idx = np.random.choice(node_indices, size=k, replace=False)
+
+            # Corruzione direttamente sugli indici
+            timestamps[sampled_idx] = self._corrupt_array(
+                timestamps[sampled_idx],
+                noise_config
+            )
+
+            noise_mask[sampled_idx] = True
+            remaining -= k
+
+        df['timestamp'] = timestamps
+        df['noise'] = noise_mask
 
         return df, df[df['noise'] == True]
 
     @staticmethod
-    def _corrupt(df,noise_config):
+    def _corrupt_array(timestamps, noise_config):
         tb = noise_config.temporal_behavior
+
         days_map = {"low": 7, "medium": 30, "high": 365}
         max_days = np.random.randint(1, 10) * days_map.get(tb.intensity, 30)
 
         if tb.corruption_mode == "uniform":
-            shifts = np.random.randint(-max_days, max_days + 1, size=len(df))
+            shifts = np.random.randint(-max_days, max_days + 1, size=len(timestamps))
         elif tb.corruption_mode == "forward":
-            shifts = np.random.randint(1, max_days + 1, size=len(df))
+            shifts = np.random.randint(1, max_days + 1, size=len(timestamps))
         elif tb.corruption_mode == "backward":
-            shifts = -np.random.randint(1, max_days + 1, size=len(df))
+            shifts = -np.random.randint(1, max_days + 1, size=len(timestamps))
         else:
             raise ValueError(f"Unknown corruption_mode: {tb.corruption_mode}")
 
-        return pd.to_datetime(df["timestamp"]) + pd.to_timedelta(shifts, unit="D")
+        # Se timestamp è datetime64[ns]
+        return timestamps + shifts.astype("timedelta64[D]")
+
+    # def _timestamp_corruption(self, df):
+    #     noise_config = self.config.timestamp_corruption
+    #     target_col = 'user_id' if noise_config.target == 'user' else 'item_id'
+    #     nodes = ordered_nodes(df, target_col, noise_config.selection_strategy)
+    #
+    #     remaining = self.budget
+    #     grouped = df.groupby(target_col)
+    #     df['noise'] = False
+    #     for node in nodes:
+    #         if remaining <= 0 or node not in grouped.groups:
+    #             continue
+    #
+    #         node_df = grouped.get_group(node)
+    #         n = per_node_budget(len(node_df), remaining,
+    #                             noise_config.min_ratings_per_node,
+    #                             noise_config.max_ratings_per_node)
+    #         if n <= 0:
+    #             continue
+    #
+    #         sampled = node_df.sample(n=n, replace=False)
+    #
+    #         df.loc[sampled.index, 'timestamp'] = self._corrupt(sampled,noise_config)
+    #         df.loc[sampled.index, 'noise'] = True
+    #         remaining -= n
+    #
+    #     return df, df[df['noise'] == True]
+    #
+    # @staticmethod
+    # def _corrupt(df,noise_config):
+    #     tb = noise_config.temporal_behavior
+    #     days_map = {"low": 7, "medium": 30, "high": 365}
+    #     max_days = np.random.randint(1, 10) * days_map.get(tb.intensity, 30)
+    #
+    #     if tb.corruption_mode == "uniform":
+    #         shifts = np.random.randint(-max_days, max_days + 1, size=len(df))
+    #     elif tb.corruption_mode == "forward":
+    #         shifts = np.random.randint(1, max_days + 1, size=len(df))
+    #     elif tb.corruption_mode == "backward":
+    #         shifts = -np.random.randint(1, max_days + 1, size=len(df))
+    #     else:
+    #         raise ValueError(f"Unknown corruption_mode: {tb.corruption_mode}")
+    #
+    #     return pd.to_datetime(df["timestamp"]) + pd.to_timedelta(shifts, unit="D")

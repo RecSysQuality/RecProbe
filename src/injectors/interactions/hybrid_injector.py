@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 import random
-
+import re
 
 from src.injectors.base import BaseNoiseInjector
 import random
@@ -36,7 +36,7 @@ class HybridNoiseInjector(BaseNoiseInjector):
         if ctx == "semantic_drift":
             return self._drift(df)
         if ctx == "random_inconsistencies":
-            return self._drift(df)
+            return self._corrupt(df)
 
         raise ValueError(f"Unknown rating noise context: {ctx}")
     # ==========================================================
@@ -192,6 +192,12 @@ class HybridNoiseInjector(BaseNoiseInjector):
         start_ts = parse_timestamp(start_ts)
         end_ts = parse_timestamp(end_ts)
 
+        rating_stats = (
+            df.groupby(target)['rating']
+            .agg(['mean', 'std'])
+            .to_dict('index')
+        )
+
         review_to_convert,title_to_convert = [],[]
         for node in nodes:
             if remaining <= 0:
@@ -203,7 +209,18 @@ class HybridNoiseInjector(BaseNoiseInjector):
             if n <= 0:
                 continue
 
-            ratings = sample_ratings(node_df['rating'], n, noise_config)
+            #ratings = sample_ratings(node_df['rating'], n, noise_config)
+            stats = rating_stats.get(node)
+            if stats:
+                mu = stats['mean']
+                sigma = stats['std']
+            else:
+                mu = np.nan
+                sigma = np.nan
+
+            ratings = sample_ratings_optimized(
+                mu, sigma, n, noise_config
+            )
             candidates = node_df[
                 node_df['rating'].isin(ratings)
             ]
@@ -250,22 +267,37 @@ class HybridNoiseInjector(BaseNoiseInjector):
         )
 
 
-        prompts = [f"Rewrite the sentence by:\n- keeping the same product\n- keeping the same sentiment\n- changing the context completely\n- avoiding references to the original context\n-- return only the revised text without any explanation\nSentence: {s} \nReturned sentence:"
+        prompts = [f"Rewrite the sentence by:\n- keeping the same product\n- keeping the same sentiment\n- changing the context completely\n- avoiding references to the original context\n-The sentence must be grammatically complete and end with a period.-- return only the revised text without any explanation\nSentence: {s} \nReturned sentence:"
          for s in text_list]
-        # prompts = [
-        #     f"Rewrite the sentence keeping the product and sentiment but changing the context. Return only the new sentence:\n{s}"
-        #     for s in text_list
-        # ]
+
+
         outp = generator(
             prompts,
             batch_size=128,
             max_new_tokens=120,
             do_sample=True,
-            temperature=0.8
+            temperature=0.8,
+            eos_token_id=generator.tokenizer.encode(".")[0]  # stop alla fine della frase
         )
         print(outp)
-        outputs = [out[0]['generated_text'].split(prompts[i])[1] for i,out in enumerate(outp)]
-        print(outputs)
+        # outputs = [out[0]['generated_text'].split(prompts[i])[1] for i,out in enumerate(outp)]
+        # print(outputs)
+        outputs = []
+        # process the output
+        for out in outp:
+            text = out[0]["generated_text"]
+            # regex robusta: cattura tutto dopo 'Returned sentence:'
+            match = re.search(r'Returned sentence:\s*(.*)', text, re.DOTALL)
+            if match:
+                sentence = match.group(1).strip().strip('"')
+            else:
+                sentence = text.strip()
+
+            # aggiungi un punto finale se manca
+            if not sentence.endswith('.'):
+                sentence += '.'
+
+            outputs.append(sentence)
         return outputs[0:mid],outputs[mid:]
 
     @staticmethod
@@ -286,17 +318,17 @@ class HybridNoiseInjector(BaseNoiseInjector):
             middle_value = mid[middle_index]
             if rating >= middle_value:
                 review_texts.append(
-                    f"Change the sentiment of the review, turning it into a negative review: {review_text} \nReturned sentence: ")
+                    f"Change the sentiment of the review, turning it into a negative review, and the sentence must be grammatically complete and end with a period: {review_text} \nReturned sentence: ")
                 if title != '':
                     titles.append(
-                        f"Change the sentiment of the review, turning it into a negative review: {title} \nReturned sentence: ")
+                        f"Change the sentiment of the review, turning it into a negative review, and the sentence must be grammatically complete and end with a period: {title} \nReturned sentence: ")
                 # df.at[idx, 'rating'] = config.rating_behavior.min_rating
             elif rating < middle_value:
                 review_texts.append(
-                    f"Change the sentiment of the review, turning it into a positive review: {review_text} \nReturned sentence: ")
+                    f"Change the sentiment of the review, turning it into a positive review, and the sentence must be grammatically complete and end with a period: {review_text} \nReturned sentence: ")
                 if title != '':
                     titles.append(
-                        f"Change the sentiment of the review, turning it into a positive review: {title} \nReturned sentence: ")
+                        f"Change the sentiment of the review, turning it into a positive review and the sentence must be grammatically complete and end with a period: {title} \nReturned sentence: ")
                 # df.at[idx, 'rating'] = config.rating_behavior.max_rating
 
 
@@ -312,12 +344,27 @@ class HybridNoiseInjector(BaseNoiseInjector):
             batch_size=128,
             max_new_tokens=120,
             do_sample=True,
-            temperature=0.8
+            temperature=0.8,
+            eos_token_id=generator.tokenizer.encode(".")[0]  # stop alla fine della frase
+
         )
 
         #outputs.extend([r['generated_text'] for r in res])
-        outputs.extend([out[0]["generated_text"].split('Returned sentence: \n')[-1].split('\n')[0].replace('"', '') for out in res])
+        #outputs.extend([out[0]["generated_text"].split('Returned sentence: \n')[-1].split('\n')[0].replace('"', '') for out in res])
+        for out in res:
+            text = out[0]["generated_text"]
+            # regex robusta: cattura tutto dopo 'Returned sentence:'
+            match = re.search(r'Returned sentence:\s*(.*)', text, re.DOTALL)
+            if match:
+                sentence = match.group(1).strip().strip('"')
+            else:
+                sentence = text.strip()
 
+            # aggiungi un punto finale se manca
+            if not sentence.endswith('.'):
+                sentence += '.'
+
+            outputs.append(sentence)
         # reinseriamo None dove non abbiamo trasformazioni
         full_output = []
         j = 0
@@ -334,20 +381,37 @@ class HybridNoiseInjector(BaseNoiseInjector):
                 batch_size=128,
                 max_new_tokens=120,
                 do_sample=True,
-                temperature=0.8
+                temperature=0.8,
+                eos_token_id=generator.tokenizer.encode(".")[0]  # stop alla fine della frase
             )
+            outputs = []
 
             #outputs.extend([r['generated_text'] for r in res])
-            outputs.extend([out[0]["generated_text"].split('Returned sentence: \n')[-1].split('\n')[0].replace('"', '') for out in res])
-
-            # reinseriamo None dove non abbiamo trasformazioni
-            full_output = []
-            j = 0
-            for t in review_texts:
-                if t is None:
-                    full_output.append(None)
+            #outputs.extend([out[0]["generated_text"].split('Returned sentence: \n')[-1].split('\n')[0].replace('"', '') for out in res])
+            for out in res:
+                text = out[0]["generated_text"]
+                # regex robusta: cattura tutto dopo 'Returned sentence:'
+                match = re.search(r'Returned sentence:\s*(.*)', text, re.DOTALL)
+                if match:
+                    sentence = match.group(1).strip().strip('"')
                 else:
-                    full_output.append(outputs[j])
+                    sentence = text.strip()
+
+                # aggiungi un punto finale se manca
+                if not sentence.endswith('.'):
+                    sentence += '.'
+
+                outputs.append(sentence)
+
+            #return outputs[0:mid], outputs[mid:]
+            # reinseriamo None dove non abbiamo trasformazioni
+
+            j = 0
+            for t in titles:
+                if t is None:
+                    full_title.append(None)
+                else:
+                    full_title.append(outputs[j])
                     j += 1
         else:
             full_title = [None for _ in range(len(full_output))]

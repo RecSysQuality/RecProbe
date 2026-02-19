@@ -48,6 +48,7 @@ class Config:
     drop_duplicates: bool = True
     noise_profile: str = "rating"
     noise_context: str = "random_inconsistences"
+    evaluation: str = "cornac"
     kcore: Optional[int] = 5
     min_rating: Optional[int] = 1
     min_review_length: Optional[int] = 0
@@ -100,6 +101,7 @@ def load_config(
         noise_context=context,
         split=split_cfg,
         random_seed=cfg_dict.get("random_seed", 42),
+        evaluation=cfg_dict.get("evaluation", 'cornac'),
         kcore=cfg_dict.get("kcore", 5),
         min_rating=cfg_dict.get("min_rating", 1),
         min_review_length=cfg_dict.get("min_review_length", 0),

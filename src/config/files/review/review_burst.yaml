@@ -1,4 +1,4 @@
-budget: 10000        # total number of reviews to add/remove/corrupt
+budget: 5       # total number of reviews to add/remove/corrupt
 avoid_duplicates: true    # evita duplicati (stesso user-item pair) se true
 
 # context 2 -- review burst noise. Create item hubs by adding many reviews to few items
@@ -16,6 +16,6 @@ review_burst:
       model: ramsrigouthamg/t5_paraphraser
       review: This product is absolutely one of my favourites! It lasts all day and the quality remains great from morning to night, which is something I really value when I use a product like this. I have used it many times over a long period of time, and every time the experience has been very good, very reliable, and very satisfying. The performance is excellent, the quality is excellent, and overall it feels like a great choice for everyday use, even after many hours, even after repeated use, and even when expectations are high. I would definitely recommend it because the product works well, works consistently, and works exactly as expected.
       title: The product you cannot live without 
-      rating: 1 # the rating of the reviews to create the near duplicates of
+      rating: 5 # the rating of the reviews to create the near duplicates of
 
 

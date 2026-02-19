@@ -19,14 +19,16 @@ class CustomExperimentRunner(BaseBaselineRunner):
         self.quality = config['quality']
 
     def run(self):
-        results = {}
+        results_df = pd.DataFrame()
 
-        return results
+
+        # SAVE IN SRC/BASELINES/RESULTS A CSV WITH THE RESULTS WITH MODEL IN ROWS AND METRICS IN COLUMNS
+
+        return results_df
 
 
 
     def _save_results(self):
-        # SAVE IN SRC/BASELINES/RESULTS A CSV WITH THE RESULTS WITH MODEL IN ROWS AND METRICS IN COLUMNS
         return
 
 

@@ -4,11 +4,10 @@ import random
 from transformers import T5ForConditionalGeneration, T5Tokenizer
 from src.injectors.base import BaseNoiseInjector
 import random
-import nltk
 import torch
 import re
+import nltk
 from nltk.corpus import words as nltk_words
-
 from nltk.corpus import wordnet
 import json
 from src.utils import *
@@ -63,7 +62,7 @@ class ReviewNoiseInjector(BaseNoiseInjector):
     # ==========================================================
     def _burst_noise(self, df, df_val, df_test):
         config = self.config
-        noise_config = self.config.review_burst_noise
+        noise_config = self.config.review_burst
         target = 'user_id' if noise_config.target == 'user' else 'item_id'
         other = 'item_id' if target == 'user_id' else 'user_id'
         df = sample_reviews(df, noise_config)
@@ -78,7 +77,6 @@ class ReviewNoiseInjector(BaseNoiseInjector):
         config = self.config
         noise_config = self.config.sentence_noise
         target = 'user_id' if noise_config.target == 'user' else 'item_id'
-        #self.global_vocab = json.load(open(config.vocab_path, 'r'))
         other = 'item_id' if target == 'user_id' else 'user_id'
         df = sample_reviews(df, noise_config)
         nodes = ordered_nodes(df, target, noise_config.selection_strategy)
@@ -88,7 +86,11 @@ class ReviewNoiseInjector(BaseNoiseInjector):
     def _remove_reviews(self, df, df_val, df_test, nodes, target, other, config, noise_config):
         removed_idx = []
         remaining = self.budget
-
+        rating_stats = (
+            df.groupby(target)['rating']
+            .agg(['mean', 'std'])
+            .to_dict('index')
+        )
         # Calcolo gradi una sola volta
         degrees = df.groupby(target)[other].nunique()
         max_degree = degrees.max()
@@ -123,7 +125,18 @@ class ReviewNoiseInjector(BaseNoiseInjector):
                 n = max(1, int(np.ceil(n * factor)))
 
             # Selezione delle rating candidate
-            ratings = sample_ratings(node_df['rating'], n, noise_config)
+            #ratings = sample_ratings(node_df['rating'], n, noise_config)
+            stats = rating_stats.get(node)
+            if stats:
+                mu = stats['mean']
+                sigma = stats['std']
+            else:
+                mu = np.nan
+                sigma = np.nan
+
+            ratings = sample_ratings_optimized(
+                mu, sigma, n, noise_config
+            )
             candidates_mask = node_mask & df['rating'].isin(ratings) & time_mask
             candidates_idx = df.index[candidates_mask]
 
@@ -138,61 +151,6 @@ class ReviewNoiseInjector(BaseNoiseInjector):
         removed = df.loc[removed_idx]
         return df.drop(removed_idx), removed
 
-    def _remove_reviews1(self, df, nodes, target, other, config, noise_config):
-        remaining = self.budget
-
-        start_ts = parse_timestamp(noise_config.temporal_interval.start_timestamp)
-        end_ts = parse_timestamp(noise_config.temporal_interval.end_timestamp)
-
-        df['noise'] = False
-
-        # Pre-calcolo dei gradi dei nodi
-        degrees = df.groupby(target)[other].nunique()
-        max_degree = degrees.max()
-
-        # Indicizza per target e rating per filtraggi più rapidi
-        df_grouped = df.groupby(target)
-
-        removed_idx = []
-        for node in nodes:
-            if remaining <= 0:
-                break
-
-            if node not in df_grouped.groups:
-                continue
-
-            node_idx = df_grouped.groups[node]
-            node_df = df.loc[node_idx]
-
-            n = per_node_budget(len(node_df), remaining,
-                                noise_config.min_reviews_per_node,
-                                noise_config.max_reviews_per_node)
-            if n <= 0:
-                continue
-
-            ratings = sample_ratings(node_df['rating'], n, noise_config)
-            mask = node_df['rating'].isin(ratings)
-            if start_ts != 0 and end_ts != 0:
-                mask &= (node_df['timestamp'] >= start_ts) & (node_df['timestamp'] <= end_ts)
-
-            candidates_idx = node_df.index[mask]
-
-            if len(candidates_idx) == 0:
-                continue
-
-            sampled_idx = np.random.choice(candidates_idx, size=min(len(candidates_idx), n), replace=False)
-
-            # Campiona casualmente le recensioni da svuotare
-            #sampled = candidates.sample(n=min(len(candidates), n), replace=False)
-            #removed_idx.extend(sampled.index)
-            removed_idx.extend(sampled_idx)
-            remaining -= len(sampled_idx)
-            df.loc[sampled_idx, 'noise'] = True
-
-        # Svuota il testo delle recensioni selezionate
-        df.loc[removed_idx, ['review_text', 'title']] = ""
-        removed = df.loc[removed_idx]
-        return df, removed
 
     # ==========================================================
     # ADD (shared by realistic + burst)
@@ -204,11 +162,15 @@ class ReviewNoiseInjector(BaseNoiseInjector):
         remaining = self.budget
         all_other = df[other].unique()
 
-
+        # rating_stats = (
+        #     df.groupby(target)['rating']
+        #     .agg(['mean', 'std'])
+        #     .to_dict('index')
+        # )
 
         seed_review = noise_config.near_duplicates_configuration.review
         seed_title = noise_config.near_duplicates_configuration.title
-        seed_rating = noise_config.near_duplicates_configuration.rating
+        #seed_rating = noise_config.near_duplicates_configuration.rating
 
         if noise_config.near_duplicates_configuration.review is not None:
             new_reviews = self._paraphrase(text=seed_review,noise_config=noise_config,
@@ -296,17 +258,7 @@ class ReviewNoiseInjector(BaseNoiseInjector):
 
             np.random.shuffle(new_reviews)
             np.random.shuffle(new_titles)
-            # print(node)
-            # print(n)
-            # print(seed_review)
-            # for p in new_reviews:
-            #     print(p)
-            # print(len(new_reviews))
-            # print(len(new_reviews[0:n]))
-            # print(len(new_titles[0:n]))
-            # print(len(sampled_other))
-            # print(len(timestamps))
-            # print('\n\n')
+
             sampled_other = sampled_other[0:min(n, len(new_reviews))]
             timestamps = timestamps[0:min(n, len(new_reviews))]
             rows.append(pd.DataFrame({
@@ -323,22 +275,34 @@ class ReviewNoiseInjector(BaseNoiseInjector):
         added = pd.concat(rows, ignore_index=True) if rows else pd.DataFrame(columns=df.columns)
         return pd.concat([df, added], ignore_index=True), added
 
+
+
     def _add_sentence_noise(self, df, nodes, target, other, config, noise_config):
+
         df['noise'] = False
         remaining = self.budget
         mod_idx = []
-
+        rating_stats = (
+            df.groupby(target)['rating']
+            .agg(['mean', 'std'])
+            .to_dict('index')
+        )
         start_ts = parse_timestamp(noise_config.temporal_behavior.start_timestamp)
         end_ts = parse_timestamp(noise_config.temporal_behavior.end_timestamp)
 
         # Prepara pool di parole
-        nltk.download('words', quiet=False)
-        word_list_all = nltk_words.words()
-        random.shuffle(word_list_all)
-        pool = [p for p in random.sample(word_list_all, 300) if len(p) > 5]
+        if len(noise_config.vocabulary) == 0:
+            nltk.download('words', quiet=True)
+            word_list_all = nltk_words.words()
+            np.random.shuffle(word_list_all)
+            pool = [p for p in np.random.choice(word_list_all, size=300, replace=False) if len(p) > 5]
+        else:
+            pool = noise_config.vocabulary
 
         if noise_config.noise_type == 'sentence_noise':
+            # pool ampliato se richiesto
             pool = self._generate_pool(depth=self.budget * 2, noise_config=noise_config, topics=pool)
+        pool = np.array(pool)  # converti in array per np.random.choice
 
         df_grouped = df.groupby(target)
 
@@ -354,8 +318,18 @@ class ReviewNoiseInjector(BaseNoiseInjector):
             if n <= 0:
                 continue
 
-            ratings = sample_ratings(node_df['rating'], n, noise_config)
+            #ratings = sample_ratings(node_df['rating'], n, noise_config)
+            stats = rating_stats.get(node)
+            if stats:
+                mu = stats['mean']
+                sigma = stats['std']
+            else:
+                mu = np.nan
+                sigma = np.nan
 
+            ratings = sample_ratings_optimized(
+                mu, sigma, n, noise_config
+            )
             # Candidati filtrati
             mask = node_df['rating'].isin(ratings)
             if start_ts != 0 and end_ts != 0:
@@ -468,22 +442,45 @@ class ReviewNoiseInjector(BaseNoiseInjector):
             Returned sentence:
             """
 
-            # prompt_template = config["prompt_sentence_noise"]
-            # prompt = prompt_template.format(text=topic)
+            #batch_prompts.append(prompt)
+
+        for topic in topics[0:depth]:
+            prompt = f"""Write a short sentence of about 15 words about "{topic}".
+        The sentence must be grammatically complete and end with a period.
+        Returned sentence:
+        """
             batch_prompts.append(prompt)
 
         res = generator(
             batch_prompts,
             do_sample=True,
-            max_new_tokens=50,
+            max_new_tokens=120,
             num_return_sequences=1,
             temperature=1.0,
             top_k=50,
-            top_p=0.95
+            top_p=0.95,
+            eos_token_id=generator.tokenizer.encode(".")[0]  # stop alla fine della frase
         )
-        results = [out[0]["generated_text"].split('Returned sentence:')[-1].replace('"', '') for out in
-                   res]
-        print(results)
+        # results = [out[0]["generated_text"].split('Returned sentence:')[-1].replace('"', '') for out in
+        #            res]
+        # print(results)
+
+        results = []
+        # process the output
+        for out in res:
+            text = out[0]["generated_text"]
+            # regex robusta: cattura tutto dopo 'Returned sentence:'
+            match = re.search(r'Returned sentence:\s*(.*)', text, re.DOTALL)
+            if match:
+                sentence = match.group(1).strip().strip('"')
+            else:
+                sentence = text.strip()
+
+            # aggiungi un punto finale se manca
+            if not sentence.endswith('.'):
+                sentence += '.'
+
+            results.append(sentence)
         return results
 
     def _paraphrase(self, text, noise_config, num_seq=2):
@@ -498,11 +495,7 @@ class ReviewNoiseInjector(BaseNoiseInjector):
         self.logger.info("Paraphrasing...")
 
         prompt = "paraphrase: " + text
-        # with open("../data_handler/prompt_config.json") as f:
-        #     config = json.load(f)
-        #
-        # prompt_template = config["prompt_paraphrase"]["prompt_text"]
-        # prompt = prompt_template.format(text=text)
+
 
         #encoding = tokenizer.encode_plus(prompt, pad_to_max_length=True, return_tensors="pt")
         encoding = tokenizer(

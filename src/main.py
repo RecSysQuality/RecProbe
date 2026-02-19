@@ -52,13 +52,13 @@ def main():
     parser.add_argument(
         "--profile",
         choices=["rating", "review", "hybrid",""],
-        default="rating",
+        default="hybrid",
         help="Noise profile",
     )
 
     parser.add_argument(
         "--noise_injection",
-        default="rating_burst",
+        default="hybrid_burst",
         help='Noise injection (called "context" in the config files)',
     )
 
@@ -138,7 +138,8 @@ def main():
             baselines_orchestrator = BaselinesOrchestrator(logger, config_recbole_path,profile,config.dataset,config.evaluation)
         elif config.evaluation == 'custom':
             baselines_orchestrator = BaselinesOrchestrator(logger, config_path,profile,config.dataset,config.evaluation)
-
+        else:
+            raise ValueError("No evaluation params provided in the YAML file")
 
         #baselines_orchestrator = BaselinesOrchestrator(logger, config_path,profile,config.dataset,config.evaluation)
 

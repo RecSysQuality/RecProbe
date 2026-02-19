@@ -4,7 +4,7 @@ preserve_degree_distribution: true
 
 # context 1 -- remove reviews. This does not remove the rating instead, it replaces the review text with an empty string
 random_inconsistencies:
-  operation: add                 # add | remove
+  operation: remove                 # add | remove
   target: item                       # user | item
   selection_strategy: top        # uniform | top | least
   max_reviews_per_node: 5           # max number of reviews removed per node
