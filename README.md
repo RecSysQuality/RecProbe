@@ -107,13 +107,19 @@ docker run --rm  -ti --gpus '"device=1"' --name recprobe-container -v /src/data/
 ### Run with manual YAML Configuration
 If you configured your YAML manually, run the container:
 ```
-docker run --rm  -ti --gpus '"device=1"' --name recprobe-container -v ./src/data/:/code/src/ recprobe:latest python3 main.py --profile=rating --noise_injection=rating_burst --baselines
+docker run --rm  -ti --gpus '"device=1"' --name recprobe-container -v ./src/:/code/src/ recprobe:latest python3 main.py --profile=rating --noise_injection=rating_burst --baselines
 ```
 
 To simply enter the container shell:
 ```
-docker run --rm  -ti --gpus '"device=1"' --name recprobe-container -v ./src/data/:/code/src/ recprobe:latest 
+docker run --rm  -ti --gpus '"device=1"' --name recprobe-container -v ./src/:/code/src/ recprobe:latest 
 ```
+
+Then, run:
+```
+python3 main.py --profile=rating --noise_injection=rating_burst --baselines
+```
+
 If you want to run the container with no gpu, just avoid the ```--gpus``` parameter.
 
 Profile choices:  `rating, review, hybrid`
