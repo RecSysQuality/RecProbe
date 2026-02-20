@@ -135,17 +135,7 @@ noise_injection choices:
    - if profile is  `review`: `random_inconsistencies, review_burst, sentence_noise`
    - if profile is  `hybrid`: `random_inconsistencies, hybrid_burst, semantic_drift`
 
-## From source (for development)
-If you want to provide custom methods and implementations, it is recommended to have the entire project. 
 
-```
-git clone https://github.com/RecSysQuality/RecProbe.git
-cd RecProbe
-python3.10 -m venv venv
-source venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
-```
 
 # Customization
 You can customize RecBople and adapt it to your needs. Below we detail what you can customize and how.
