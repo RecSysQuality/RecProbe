@@ -1,5 +1,5 @@
-# RecProbe: Stress-Testing Recommender Systems via Systematic Noise Injection 
-RecProbe is currently under review as a resource paper at SIGIR 2026.
+# A Cross-Family Analysis of Recommender System Robustness to Data Perturbations
+This paper is currently under review at journal of Information Processing and Management.
 
 ![RecProbe](logo.png)
 
