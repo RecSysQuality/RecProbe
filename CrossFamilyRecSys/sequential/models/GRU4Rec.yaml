@@ -1,0 +1,36 @@
+# ================================================================
+# GRU4Rec — architettura
+# Session-based Recommendations with Recurrent Neural Networks
+# Hidasi et al., 2016
+# ================================================================
+#
+# Parametri dataset-specific (batch_size, MAX_ITEM_LIST_LENGTH,
+# epochs, min_inter) sono nel config del dataset.
+# Qui solo l'architettura del modello.
+#
+# hidden_size = 128
+#   Buon bilanciamento capacità/parametri per dataset di medie
+#   dimensioni. Aumenta a 256 su Yelp/Books se underfitting.
+#
+# num_layers = 1
+#   Un solo layer GRU è standard in letteratura e sufficiente
+#   per sequenze di lunghezza ≤ 50. Layer aggiuntivi raramente
+#   migliorano su recommendation task.
+#
+# dropout_prob = 0.3
+#   Dropout moderato: più alto rispetto ai transformer (0.1)
+#   perché GRU è più soggetto a overfitting su sequenze corte.
+#
+# loss_type = CE
+#   Cross-entropy su softmax full vocabulary: più stabile di BPR
+#   su dataset grandi con molti item.
+# ================================================================
+
+model: GRU4Rec
+
+hidden_size: 128
+num_layers: 1
+dropout_prob: 0.3
+loss_type: CE
+epochs: 200
+

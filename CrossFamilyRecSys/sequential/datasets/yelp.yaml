@@ -1,0 +1,64 @@
+# ================================================================
+# Dataset config — Yelp
+# Users: 99K  |  Items: 56K  |  Ratings: 2.76M  |  Sparsity: 99.95%
+# ================================================================
+#
+# RAGIONAMENTO SUI PARAMETRI
+# --------------------------
+# MAX_ITEM_LIST_LENGTH = 50
+#   Con 2.76M ratings su 99K utenti → media ~28 interazioni/utente.
+#   50 cattura la maggior parte delle sequenze senza padding eccessivo.
+#
+# min_user_inter_num = 10
+#   Dataset denso (2.76M): soglia più alta per tenere solo utenti
+#   con storia significativa e ridurre il rumore dei nuovi utenti.
+#
+# min_item_inter_num = 10
+#   Stesso ragionamento: 56K item, elimina item rarissimi.
+#
+# train_batch_size = 4096
+#   Dataset grande: batch più grandi per sfruttare la GPU
+#   e stabilizzare il gradiente.
+#
+# epochs = 200 con stopping_step = 20
+#   Dataset grande converge più lentamente; 200 epoche dà spazio
+#   sufficiente con early stopping.
+# ================================================================
+
+# ---------- campi ----------
+USER_ID_FIELD: user_id
+ITEM_ID_FIELD: item_id
+TIME_FIELD: timestamp
+# RATING_FIELD non caricato: i modelli sequential non lo usano
+
+field_separator: "\t"  # preprocess.py converte a TAB
+seq_separator: " "
+
+load_col:
+  inter: [user_id, item_id, timestamp]
+
+
+
+# ---------- sequenza ----------
+MAX_ITEM_LIST_LENGTH: 50
+
+# ---------- split ----------
+# benchmark_filename passato via parameter_dict in run_experiments.py
+# RecBole cerca: <tag>.train.inter  <tag>.valid.inter  <tag>.test.inter
+
+# ---------- training ----------
+epochs: 200
+train_batch_size: 4096
+eval_batch_size: 4096
+learner: adam
+learning_rate: 0.001
+stopping_step: 20
+
+# ---------- negative sampling ----------
+# CE loss gestisce il neg sampling internamente: deve essere None
+train_neg_sample_args: ~
+
+# ---------- evaluation ----------
+metrics: ["Recall", "NDCG", "MRR", "Hit"]
+topk: [10, 20, 50]
+valid_metric: NDCG@10

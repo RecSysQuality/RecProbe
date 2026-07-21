@@ -1,0 +1,39 @@
+# ================================================================
+# BERT4Rec — architettura
+# BERT4Rec: Sequential Recommendation with BERT
+# Sun et al., 2019
+# ================================================================
+#
+# hidden_size = 64, n_heads = 2, n_layers = 2
+#   Identici a SASRec per confronto diretto tra i due transformer.
+#   BERT4Rec tende ad avere più parametri per il masking: tenere
+#   l'architettura uguale isola l'effetto del training objective.
+#
+# mask_ratio = 0.2
+#   Proporzione di item mascherati per Cloze task.
+#   Il paper originale usa 0.2 su dataset Amazon.
+#   Su Yelp (sequenze più lunghe, fino a 50) 0.2 va bene.
+#   Su Books/Toys (sequenze più corte, 20) considera 0.15
+#   per non mascherare troppo su sequenze già brevi.
+#   → Valore di compromesso: 0.2 per uniformità tra dataset.
+#
+# hidden_dropout_prob = attn_dropout_prob = 0.5
+#   Stesso ragionamento di SASRec: dropout del paper originale.
+#
+# loss_type = CE
+#   Coerente con GRU4Rec e SASRec.
+# ================================================================
+
+model: BERT4Rec
+epochs: 200
+hidden_size: 64
+inner_size: 256
+n_heads: 2
+n_layers: 2
+hidden_dropout_prob: 0.5
+attn_dropout_prob: 0.5
+hidden_act: gelu
+layer_norm_eps: 1.0e-12
+initializer_range: 0.02
+mask_ratio: 0.2
+loss_type: CE

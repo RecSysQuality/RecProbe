@@ -1,0 +1,71 @@
+# ================================================================
+# Dataset config — Amazon_Toys_and_Games
+# Users: 43K  |  Items: 14K  |  Ratings: 753K  |  Sparsity: 99.94%
+# ================================================================
+#
+# RAGIONAMENTO SUI PARAMETRI
+# --------------------------
+# MAX_ITEM_LIST_LENGTH = 20
+#   Con 753K ratings su 43K utenti → media ~17 interazioni/utente.
+#   Il dataset è il più piccolo: sequenze medie corte.
+#   20 copre la quasi totalità degli utenti senza padding inutile.
+#   Allineato con la letteratura su Amazon Toys (es. S3-Rec, CL4SRec).
+#
+# min_user_inter_num = 5
+#   Dataset più piccolo (43K utenti): abbassare la soglia per
+#   preservare quanti più utenti possibile. 5-core standard.
+#
+# min_item_inter_num = 5
+#   14K item è il catalogo più piccolo: 5-core per mantenere
+#   copertura sufficiente del catalogo.
+#
+# train_batch_size = 1024
+#   Dataset piccolo: batch più piccoli per avere più update per epoca
+#   e sfruttare meglio i pochi dati. Riduce il rischio di overfit
+#   su mini-batch troppo uniformi.
+#
+# epochs = 300
+#   Dataset piccolo tende a convergere in meno step assoluti ma
+#   può oscillare: 300 + early stopping gestisce entrambi i casi.
+#
+# learning_rate = 0.001
+#   Standard; con dataset piccolo considera di scendere a 0.0005
+#   se vedi instabilità nella valid loss.
+# ================================================================
+
+# ---------- campi ----------
+USER_ID_FIELD: user_id
+ITEM_ID_FIELD: item_id
+TIME_FIELD: timestamp
+
+field_separator: "\t"  # preprocess.py converte a TAB
+seq_separator: " "
+
+load_col:
+  inter: [user_id, item_id, timestamp]
+
+
+
+# ---------- sequenza ----------
+MAX_ITEM_LIST_LENGTH: 20
+
+# ---------- split ----------
+# benchmark_filename passato via parameter_dict in run_experiments.py
+# RecBole cerca: <tag>.train.inter  <tag>.valid.inter  <tag>.test.inter
+
+# ---------- training ----------
+epochs: 300
+train_batch_size: 2048
+eval_batch_size: 4096
+learner: adam
+learning_rate: 0.001
+stopping_step: 20
+
+# ---------- negative sampling ----------
+# CE loss gestisce il neg sampling internamente: deve essere None
+train_neg_sample_args: ~
+
+# ---------- evaluation ----------
+metrics: ["Recall", "NDCG", "MRR", "Hit"]
+topk: [10, 20, 50]
+valid_metric: NDCG@10

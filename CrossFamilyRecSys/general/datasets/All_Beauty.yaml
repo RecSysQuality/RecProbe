@@ -1,0 +1,75 @@
+# ================================================================
+# Dataset config — Amazon_Toys_and_Games  (LightGCN / NGCF / GCMC)
+# Users: 43K  |  Items: 14K  |  Ratings: 753K  |  Sparsity: 99.94%
+# ================================================================
+#
+# DIFFERENZE RISPETTO AL CONFIG SEQUENZIALE
+# ------------------------------------------
+# - Niente MAX_ITEM_LIST_LENGTH: i modelli CF a grafo non usano sequenze
+# - Niente seq_separator
+# - train_neg_sample_args: gestito per-modello in run_cf.py
+#   (BPR per LightGCN/NGCF, None per GCMC)
+# - eval_args con RS (Random Split) e order RO invece di LOO
+# - metrics: Recall/NDCG per LightGCN/NGCF, RMSE/MAE per GCMC
+#   → le metriche specifiche per GCMC vengono override in run_cf.py
+#
+# RAGIONAMENTO SUI PARAMETRI
+# --------------------------
+# min_user_inter_num = 5
+#   Dataset piccolo (43K utenti): soglia bassa per preservare
+#   quanti più utenti possibile nel grafo. 5-core standard.
+#
+# min_item_inter_num = 5
+#   14K item, catalogo piccolo: 5-core mantiene copertura sufficiente.
+#
+# train_batch_size = 2048
+#   Dataset piccolo: batch contenuto per avere più update per epoca.
+#   LightGCN/NGCF campionano triple (u, i+, i-) per BPR.
+#   GCMC itera su coppie osservate (mode=labeled): stesso batch size.
+#
+# epochs = 200
+#   Toys è piccolo e il grafo converge relativamente in fretta.
+#   L'override per-modello in MODEL_HPARAMS_CF (run_cf.py) ha
+#   la precedenza su questo valore (config_dict applicato per ultimo).
+#
+# eval_step = stopping_step = 20
+#   Valuta ogni 20 epoche; early stopping dopo 20 valutazioni
+#   senza miglioramento (= 400 epoche di pazienza massima).
+# ================================================================
+
+# ---------- campi ----------
+USER_ID_FIELD: user_id
+ITEM_ID_FIELD: item_id
+TIME_FIELD: timestamp
+
+field_separator: "\t"
+seq_separator: " "
+
+load_col:
+  inter: [user_id, item_id, timestamp]
+
+# ---------- filtering ----------
+min_user_inter_num: 5
+min_item_inter_num: 5
+
+# ---------- training ----------
+epochs: 200
+train_batch_size: 2048
+eval_batch_size: 2048
+learner: adam
+learning_rate: 0.001
+eval_step: 20
+stopping_step: 20
+
+# ---------- negative sampling ----------
+# Gestito in run_cf.py per-modello:
+#   LightGCN/NGCF → uniform BPR (sample_num=1)
+#   GCMC          → None (rating prediction, nessun neg sampling)
+train_neg_sample_args: ~
+
+# ---------- evaluation ----------
+# LightGCN/NGCF: queste metriche vengono usate direttamente.
+# GCMC: override in run_cf.py → RMSE, MAE (+ AUC post-processing).
+metrics: ["Recall", "NDCG", "MRR", "Hit"]
+topk: [10, 20, 50]
+valid_metric: NDCG@10

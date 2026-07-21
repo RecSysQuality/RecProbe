@@ -1,0 +1,66 @@
+# ================================================================
+# Dataset config — Yelp  (LightGCN / NGCF / GCMC)
+# Users: 99K  |  Items: 56K  |  Ratings: 2.76M  |  Sparsity: 99.95%
+# ================================================================
+#
+# DIFFERENZE RISPETTO AL CONFIG SEQUENZIALE
+# ------------------------------------------
+# Stesse differenze strutturali di Toys_and_Games.yaml CF:
+# niente MAX_ITEM_LIST_LENGTH, split RS, metriche GCMC via override.
+#
+# RAGIONAMENTO SUI PARAMETRI
+# --------------------------
+# min_user_inter_num = 10
+#   Yelp è denso (2.76M rating): soglia più alta rispetto a Toys/Books
+#   per tenere solo utenti con storia significativa nel grafo.
+#   Allineato al config sequenziale Yelp.
+#
+# min_item_inter_num = 10
+#   56K item: elimina venue rarissime che non contribuiscono
+#   significativamente alla propagazione nel grafo.
+#
+# train_batch_size = 4096
+#   Dataset grande: batch più grandi per sfruttare la GPU e
+#   stabilizzare il gradiente. LightGCN/NGCF su Yelp hanno un
+#   grafo con molti archi → batch grandi ammortizzano il costo.
+#
+# epochs = 200
+#   Yelp ha abbondanza di dati per item (2.76M / 56K ≈ 49 rating/item),
+#   convergenza più rapida rispetto a Books. Override in MODEL_HPARAMS_CF.
+#
+# eval_step = stopping_step = 20
+#   Valuta ogni 20 epoche; early stopping dopo 20 valutazioni
+#   senza miglioramento.
+# ================================================================
+
+# ---------- campi ----------
+USER_ID_FIELD: user_id
+ITEM_ID_FIELD: item_id
+TIME_FIELD: timestamp
+
+field_separator: "\t"
+seq_separator: " "
+
+load_col:
+  inter: [user_id, item_id, rating, timestamp]
+
+# ---------- filtering ----------
+min_user_inter_num: 10
+min_item_inter_num: 10
+
+# ---------- training ----------
+epochs: 200
+train_batch_size: 4096
+eval_batch_size: 4096
+learner: adam
+learning_rate: 0.001
+eval_step: 20
+stopping_step: 20
+
+# ---------- negative sampling ----------
+train_neg_sample_args: ~
+
+# ---------- evaluation ----------
+metrics: ["Recall", "NDCG", "MRR", "Hit"]
+topk: [10, 20, 50]
+valid_metric: NDCG@10

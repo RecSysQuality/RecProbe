@@ -1,0 +1,33 @@
+# ================================================================
+# BPR — Bayesian Personalised Ranking
+# Rendle et al., 2009 (UAI)
+# ================================================================
+#
+# MODELLO PARAMETRICO — salva checkpoint .pth
+# Pipeline identico a LightGCN/NGCF: BPR loss, full_sort_predict,
+# neg sampling esplicito, mode=full, split LOO temporale.
+#
+# BPR è matrix factorization pura con loss BPR:
+# impara embedding user e item ottimizzando la probabilità che
+# un item positivo sia ranked sopra uno negativo.
+# Niente graph convolution, niente MLP — solo prodotto scalare
+# tra embedding user e item.
+#
+# embedding_size = 64 (default Toys/Beauty)
+#   Scala con la dimensione del catalogo.
+#   Override a 128 su Yelp/Books via MODEL_HPARAMS_CF.
+#   Allineato a LightGCN per confronto diretto.
+#
+# reg_weight = 1e-4
+#   L2 regularisation sugli embedding.
+#   Stesso default di LightGCN — BPR ha meno parametri
+#   (solo embedding, niente matrici di propagazione) quindi
+#   la stessa reg_weight è appropriata.
+#   Override a 1e-3 su Books per sparsità altissima.
+# ================================================================
+
+model: BPR
+epochs: 200
+embedding_size: 64
+reg_weight: 1.0e-4
+loss_type: BPR

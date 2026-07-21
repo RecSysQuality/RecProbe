@@ -1,0 +1,45 @@
+# ================================================================
+# NGCF — architettura
+# Neural Graph Collaborative Filtering
+# Wang et al., 2019 (SIGIR)
+# ================================================================
+#
+# DIFFERENZA DA LightGCN
+# ----------------------
+# NGCF è il predecessore di LightGCN. Mantiene trasformazioni
+# lineari (proiezioni W1, W2) e non-linearità (LeakyReLU) ad
+# ogni layer di propagazione, che LightGCN ha rimosso.
+# È più pesante computazionalmente ma può catturare interazioni
+# feature più ricche su dataset densi.
+# Su dataset molto sparsi (Books) LightGCN tende a sovraperformare
+# NGCF perché evita l'overfitting delle proiezioni.
+#
+# embedding_size = 64
+#   Uguale a LightGCN e ai modelli sequenziali per confronto diretto.
+#
+# hidden_size_list = [64, 64, 64]
+#   Tre layer con stessa dimensione dell'embedding.
+#   Il paper usa [64, 64, 64] su Gowalla e Amazon-Book.
+#   La concatenazione dei layer produce un vettore finale di
+#   64*(1+3) = 256 dimensioni per user e item.
+#
+# node_dropout / message_dropout = 0.1
+#   Il paper usa dropout moderato (0.1) su Amazon dataset.
+#   Su Books (sparsità ~100%) considerare 0.0 per node_dropout
+#   per non perdere nodi già raramente visitati.
+#   → 0.1 come valore di compromesso coerente col paper.
+#
+# reg_weight = 1e-5
+#   NGCF ha più parametri di LightGCN (matrici W): reg più bassa
+#   per non penalizzare eccessivamente la capacità del modello.
+#   Il paper originale usa 1e-5 su Amazon-Book.
+# ================================================================
+
+model: NGCF
+epochs: 200
+embedding_size: 64
+hidden_size_list: [64, 64, 64]
+node_dropout: 0.1
+message_dropout: 0.1
+reg_weight: 1.0e-5
+loss_type: BPR

@@ -1,0 +1,49 @@
+# ================================================================
+# NeuMF — Neural Matrix Factorization
+# He et al., 2017 (WWW)
+# ================================================================
+#
+# MODELLO PARAMETRICO — salva checkpoint .pth
+# Pipeline identico a LightGCN/NGCF: BPR loss, full_sort_predict,
+# neg sampling esplicito, mode=full, split LOO temporale.
+#
+# NeuMF combina due componenti:
+#   GMF (Generalised Matrix Factorisation): prodotto scalare
+#       tra embedding user e item — cattura interazioni lineari.
+#   MLP: concatenazione degli embedding passata attraverso
+#       layer fully-connected — cattura interazioni non lineari.
+# L'output finale è la fusione dei due.
+#
+# mf_embedding_size = 32 (default Toys/Beauty)
+#   Dimensione embedding per la componente GMF.
+#   Più piccola dell'embedding MLP perché GMF è più semplice.
+#   Override a 64 su Yelp/Books.
+#
+# mlp_embedding_size = 32 (default Toys/Beauty)
+#   Dimensione embedding per la componente MLP.
+#   Override a 64 su Yelp/Books.
+#
+# layers = [64, 32, 16] (default Toys/Beauty)
+#   Dimensioni dei layer MLP dopo la concatenazione.
+#   Il primo layer riceve mlp_embedding_size * 2 in input.
+#   Struttura decrescente standard del paper originale.
+#   Override a [128, 64, 32] su Yelp/Books per catalogo grande.
+#
+# dropout_prob = 0.5 (default Toys/Beauty)
+#   Dropout dopo ogni layer MLP.
+#   Alto su dataset piccoli/sparsi per regularizzare.
+#   Ridotto a 0.3 su Yelp/Books: più dati per item.
+#
+# reg_weight = 1e-4
+#   L2 regularisation. NeuMF ha più parametri di BPR (MLP layers)
+#   quindi la stessa reg_weight di BPR è appropriata come default.
+# ================================================================
+
+model: NeuMF
+epochs: 200
+mf_embedding_size: 32
+mlp_embedding_size: 32
+layers: [64, 32, 16]
+dropout_prob: 0.5
+reg_weight: 1.0e-4
+loss_type: BPR

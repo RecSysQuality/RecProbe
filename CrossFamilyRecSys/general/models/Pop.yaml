@@ -1,0 +1,28 @@
+# ================================================================
+# Pop — Popularity Baseline
+# Most Popular Items Recommender
+# ================================================================
+#
+# MODELLO NON PARAMETRICO
+# -------------------------
+# Pop raccomanda semplicemente gli item più popolari (più interazioni
+# nel training set) a tutti gli utenti indistintamente.
+# Non ha parametri da apprendere: niente learning_rate, epochs,
+# embedding, dropout. Il "training" è solo il conteggio delle
+# interazioni per item.
+#
+# Perché usarlo:
+#   È il baseline più semplice possibile. Se un modello non batte
+#   Pop in modo consistente, c'è qualcosa che non va.
+#   Su metriche di coverage e novelty, Pop ha coverage bassa
+#   (raccomanda sempre gli stessi item popolari) e novelty bassa
+#   (gli item popolari sono per definizione già noti).
+#   Utile per confrontare il trade-off accuratezza/diversity.
+#
+# loss_type: BPR
+#   RecBole richiede un loss_type per tutti i GeneralRecommender.
+#   Pop non lo usa per il training ma il config deve averlo.
+# ================================================================
+
+model: Pop
+loss_type: BPR

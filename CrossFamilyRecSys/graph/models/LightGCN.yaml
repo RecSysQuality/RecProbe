@@ -1,0 +1,43 @@
+# ================================================================
+# LightGCN — architettura
+# LightGCN: Simplifying and Powering Graph Convolution Network
+# for Recommendation
+# He et al., 2020 (SIGIR)
+# ================================================================
+#
+# DIFFERENZA FONDAMENTALE DAL PIPELINE SEQUENZIALE
+# -------------------------------------------------
+# LightGCN è un modello CF basato su grafo: non usa sequenze
+# temporali ma il grafo bipartito user–item.
+# Il training objective è BPR (Bayesian Personalised Ranking):
+# per ogni interazione positiva si campiona un item negativo.
+# Non esiste il concetto di "item list" o masking.
+#
+# embedding_size = 64
+#   Uguale a hidden_size dei modelli sequenziali: permette
+#   confronto diretto su diversity/coverage (stessa dimensione
+#   dello spazio embedding per il calcolo della diversità).
+#
+# n_layers = 3
+#   Il paper originale mostra che 3 layer sono ottimali su
+#   dataset sparsi Amazon (Books, Beauty). Con sparsità >99.9%
+#   aggiungere layer aumenta lo smoothing senza guadagno.
+#   Su Toys (meno sparso) 3 layer vanno bene comunque.
+#
+# reg_weight = 1e-4
+#   L2 regularisation sul paper originale Amazon datasets.
+#   Con alta sparsità (Books) considera 1e-3 per più regolarizzazione,
+#   ma 1e-4 è il valore di default raccomandato.
+#
+# loss_type = BPR
+#   Standard per LightGCN. CE non supportato nativamente.
+#   RecBole gestisce automaticamente il neg sampling BPR.
+# ================================================================
+
+model: LightGCN
+epochs: 200
+embedding_size: 64
+n_layers: 3
+reg_weight: 1.0e-4
+require_pow: False
+loss_type: BPR

@@ -1,0 +1,37 @@
+# ================================================================
+# AsymKNN — Asymmetric Item-based KNN
+# Cremonesi et al., 2010 (RecSys)
+# ================================================================
+#
+# DIFFERENZA DA ItemKNN
+# ----------------------
+# AsymKNN introduce un parametro alpha che controlla l'asimmetria
+# nella normalizzazione della similarità. La formula è:
+#
+#   sim(i, j) = |U_i ∩ U_j| / (|U_i|^alpha * |U_j|^(1-alpha))
+#
+# Con alpha=0.5 si ottiene la cosine similarity (= ItemKNN con normalize=True).
+# Con alpha→0: normalizzazione solo su j → favorisce item rari i
+#              che hanno molti vicini (utile contro popularity bias).
+# Con alpha→1: normalizzazione solo su i → item popolari penalizzati.
+#
+# alpha = 0.5
+#   Default: equivale a cosine sim, per confronto diretto con ItemKNN.
+#   Cambia questo valore per esplorare il trade-off popularity bias:
+#   alpha=0.3 favorisce item rari nella raccomandazione.
+#
+# k = 100
+#   Stesso ragionamento di ItemKNN.
+#   Override per dataset in MODEL_HPARAMS_BL di run_baselines.py.
+#
+# Perché usarlo:
+#   AsymKNN è più robusto di ItemKNN su dataset molto sparsi perché
+#   penalizza la similarità tra item con pochissime co-occorrenze.
+#   Su Books (99.97% sparsità) può superare ItemKNN grazie a questo.
+# ================================================================
+
+model: ItemKNN
+k: 100
+shrink: 0
+normalize: True
+asymmetric_alpha: 0.5

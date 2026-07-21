@@ -1,0 +1,35 @@
+# ================================================================
+# ItemKNN — Item-based K-Nearest Neighbours
+# ================================================================
+#
+# MODELLO NON PARAMETRICO
+# -------------------------
+# ItemKNN calcola la similarità tra item in base alle interazioni
+# condivise tra utenti (cosine similarity sulla matrice user-item).
+# Per ogni utente, aggrega i vettori degli item interagiti pesati
+# per similarità e restituisce i K item più simili non ancora visti.
+# Niente learning, niente embedding: è algebra lineare sparsa.
+#
+# k = 100
+#   Numero di vicini considerati per la predizione.
+#   Il paper originale (Sarwar et al. 2001) usa k=20-100.
+#   100 è conservativo per dataset sparsi: con pochi vicini reali
+#   disponibili, k alto non peggiora (i vicini lontani pesano poco).
+#   Su Books (113K item, sparsità 99.97%) abbassare k a 50 riduce
+#   il rumore da item con similarità quasi nulla.
+#   Override per dataset in MODEL_HPARAMS_BL di run_baselines.py.
+#
+# shrink = 0
+#   Termine di shrinkage nella similarità coseno (Herlocker 1999).
+#   Riduce il peso di item con poche co-occorrenze.
+#   0 = nessuno shrinkage (standard per confronto con letteratura).
+#   Considera 10-50 su dataset molto sparsi.
+#
+# normalize = True
+#   Normalizza i vettori prima del prodotto: equivale a cosine sim.
+# ================================================================
+
+model: ItemKNN
+k: 100
+shrink: 0
+normalize: True

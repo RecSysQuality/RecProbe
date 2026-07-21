@@ -1,0 +1,70 @@
+# ================================================================
+# Dataset config — All_Beauty
+# Users: 43K  |  Items: 14K  |  Ratings: 753K  |  Sparsity: 99.94%
+# ================================================================
+#
+# RAGIONAMENTO SUI PARAMETRI
+# --------------------------
+# MAX_ITEM_LIST_LENGTH = 20
+#   Con 753K ratings su 43K utenti → media ~17 interazioni/utente.
+#   Il dataset è il più piccolo: sequenze medie corte.
+#   20 copre la quasi totalità degli utenti senza padding inutile.
+#   Allineato con la letteratura su Amazon Toys (es. S3-Rec, CL4SRec).
+#
+# min_user_inter_num = 5
+#   Dataset più piccolo (43K utenti): abbassare la soglia per
+#   preservare quanti più utenti possibile. 5-core standard.
+#
+# min_item_inter_num = 5
+#   14K item è il catalogo più piccolo: 5-core per mantenere
+#   copertura sufficiente del catalogo.
+#
+# train_batch_size = 1024
+#   Dataset piccolo: batch più piccoli per avere più update per epoca
+#   e sfruttare meglio i pochi dati. Riduce il rischio di overfit
+#   su mini-batch troppo uniformi.
+#
+# epochs = 300
+#   Dataset piccolo tende a convergere in meno step assoluti ma
+#   può oscillare: 300 + early stopping gestisce entrambi i casi.
+#
+# learning_rate = 0.001
+#   Standard; con dataset piccolo considera di scendere a 0.0005
+#   se vedi instabilità nella valid loss.
+# ================================================================
+
+# ---------- campi ----------
+# TIME_FIELD rimosso: con split LS + order RO il timestamp serve solo
+# per ordinare le righe nel preprocessing — non deve entrare nel batch.
+# I file .inter sono già ordinati cronologicamente per utente.
+
+field_separator: "\t"
+seq_separator: " "
+
+
+
+
+load_col:
+  inter: [user_id, item_id, timestamp]
+
+USER_ID_FIELD: user_id
+ITEM_ID_FIELD: item_id
+TIME_FIELD: timestamp
+
+
+# ---------- sequenza ----------
+MAX_ITEM_LIST_LENGTH: 20
+
+# ---------- training ----------
+epochs: 300
+train_batch_size: 1024
+eval_batch_size: 2048
+learner: adam
+learning_rate: 0.001
+stopping_step: 20
+
+
+# ---------- evaluation ----------
+metrics: ["Recall", "NDCG", "MRR", "Hit"]
+topk: [10, 20, 50]
+valid_metric: NDCG@10

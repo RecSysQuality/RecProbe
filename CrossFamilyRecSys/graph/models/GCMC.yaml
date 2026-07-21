@@ -1,0 +1,64 @@
+# ================================================================
+# GCMC — architettura
+# Graph Convolutional Matrix Completion
+# Berg et al., 2017 (arXiv)
+# ================================================================
+#
+# TASK: RATING PREDICTION (regressione), NON ranking top-k
+# ---------------------------------------------------------
+# GCMC predice il valore numerico del rating (1-5 stelle).
+# La loss è MSE (Mean Squared Error).
+# La metrica di validazione e test è RMSE (Root MSE) e MAE.
+# NON usa BPR né CE: niente neg sampling.
+# NON usa full_sort_predict: usa predict() su coppie (u, i).
+#
+# CONSEGUENZE SUL PIPELINE
+# -------------------------
+# 1. train_neg_sample_args deve essere None (nessun neg sampling).
+# 2. eval_args.mode deve essere "labeled" (non "full"):
+#    RecBole calcola RMSE/MAE solo sulle interazioni reali nel
+#    test set, non su tutti gli item del catalogo.
+# 3. valid_metric = RMSE (minimizzare, non massimizzare).
+#    RecBole con RMSE usa la logica "lower is better" automaticamente.
+# 4. Il campo rating deve essere presente nel .inter e caricato.
+#    Lo staging deve emettere user_id:token \t item_id:token \t
+#    rating:float \t timestamp:float (nell'header RecBole).
+#
+# PARAMETRI ARCHITETTURA
+# ----------------------
+# embedding_size = 64
+#   Uguale agli altri modelli per confronto degli embedding.
+#
+# n_layers = 1
+#   GCMC usa tipicamente 1 layer di graph convolution.
+#   Il paper originale usa 1 layer su MovieLens e Flixster.
+#   Con dataset sparsi come Amazon (sparsità ~99.9%) aggiungere
+#   layer aumenta l'over-smoothing senza migliorare.
+#
+# dropout_prob = 0.7
+#   Il paper originale usa dropout alto (0.7) su Amazon.
+#   Con sparsità alta, dropout forte riduce l'overfitting
+#   sulle poche coppie osservate.
+#
+# sparse_feature = False
+#   False: usa dense embedding. True userebbe feature side-info
+#   (non disponibili nei dataset Amazon usati in questo progetto).
+#
+# class_num = 5
+#   Numero di classi di rating (1, 2, 3, 4, 5).
+#   GCMC in RecBole implementa la variante con output categorico
+#   (softmax su K classi) + expected value per il rating predetto.
+#   Questo è il motivo per cui funziona con rating interi 1-5.
+#
+# loss_type = nll (negative log-likelihood, non MSE diretto)
+#   RecBole GCMC usa NLL sul softmax categorico internamente,
+#   ma riporta RMSE/MAE come metriche di eval.
+# ================================================================
+
+model: GCMC
+epochs: 200
+embedding_size: 64
+n_layers: 1
+dropout_prob: 0.7
+sparse_feature: False
+class_num: 5
