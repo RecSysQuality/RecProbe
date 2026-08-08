@@ -3,6 +3,7 @@ This paper is currently under review at journal of Information Processing and Ma
 
 ![RecProbe](logo.png)
 
+The perturbed Amazon Reviews and Yelp datasets are available [here](https://figshare.com/s/6c1251b43d45552cfd24) together with all the dataset statistics.
 
 **RecProbe**, is a resource designed to evaluate robustness by generating controlled perturbations of ratings, reviews, and their combinations. RecProbe features a flexible perturbation module along with a comprehensive evaluation pipeline that compares baseline models on both clean and perturbed datasets, allowing for systematic analysis of noise effects. 
 
