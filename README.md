@@ -1,5 +1,6 @@
-# A Cross-Family Analysis of Recommender System Robustness to Data Perturbations
-This paper is currently under review at journal of Information Processing and Management.
+# RECPROBE: A Data Perturbation Framework for Robustness
+Analysis of Recommender Systems
+This paper is currently under review at journal Expert Systems with Applications.
 
 ![RecProbe](logo.png)
 
