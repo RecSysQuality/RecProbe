@@ -1,0 +1,29 @@
+dataset: synthetic
+source: amazon
+input:
+  reviews:
+    file_name: Synthetic
+    path: ./data/input/synthetic
+    format: csv
+    separator: "\t"
+  items:
+    file_name: meta_Synthetic
+    path: ./data/input/synthetic
+    format: jsonl
+output:
+  reviews:
+    path: ./data/output/synthetic
+    format: csv
+    separator: "\t"
+kcore: 3
+min_rating: 1
+min_review_length: 0
+split:
+  training: 0.8
+  test: 0.1
+  validation: 0.1
+  noise_in_test: false
+  strategy: random-holdout
+drop_duplicates: true
+random_seed: 42
+verbose: true

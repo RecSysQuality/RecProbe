@@ -1,0 +1,15 @@
+budget: 0.2
+review_burst:
+  target: item
+  selection_strategy: top
+  max_reviews_per_node: 50
+  min_reviews_per_node: 1
+  min_length_of_review: 3
+  max_length_of_review: 40
+  rating_behavior: {min_rating: 1, max_rating: 2, sampling_strategy: uniform}
+  temporal_behavior:
+    start_timestamp: 2021-01-01
+    end_timestamp: 2022-01-01
+    window: {days: 0, hours: 10, minutes: 0}
+  fake_users: {use_fake_users: true, fake_behavior: mimic}
+  llm_configuration: {backend: template, prompt: "Write a very short, generic negative review."}

@@ -1,0 +1,54 @@
+# (4) Evaluation - Figure 3, right panel
+framework: cornac               # cornac | recbole | reviews4rec | custom
+beyond_accuracy: novelty coverage entropy gini
+user_segments: 0 25 75          # percentile thresholds on clean-train activity (0 = all users)
+user_segment_ids: {}            # e.g. {cold: ./cold_users.txt}
+seeds: 0 10 42
+top_k: 10
+cutoffs: 10                     # list lengths for the beyond-accuracy metrics
+reuse_clean_results: true
+custom_metrics: []              # e.g. ["mypackage.metrics:my_metric"]
+
+cornac:
+  rating_threshold: 1.0
+  models:
+    - name: BPR
+      params:
+        k: 50
+        max_iter: 100
+        learning_rate: 0.01
+        lambda_reg: 0.001
+    - name: MostPop
+      params: {}
+  metrics:
+    - NDCG:
+        k: 10
+    - Recall:
+        k: 10
+
+recbole:
+  native_config: null           # optional RecBole YAML with library-specific options
+  params: {epochs: 50, train_batch_size: 2048, stopping_step: 10}
+  models:
+    - name: BPR
+      params: {embedding_size: 64}
+    - name: LightGCN
+      params: {}
+  metrics:
+    - NDCG: {k: 10}
+    - Recall: {k: 10}
+
+reviews4rec:
+  repo_path: null
+  command: "python main.py --dataset {data_dir} --out {out_dir} --model {model} --seed {seed} {params}"
+  models:
+    - name: DeepCoNN
+      params: {}
+
+custom:
+  models:
+    - name: MostPop
+    - name: Random
+  metrics:
+    - NDCG: {k: 10}
+    - Recall: {k: 10}

@@ -1,0 +1,5 @@
+budget: 0.3
+rating_flip:
+  target: user
+  selection_strategy: uniform
+  max_per_node: 20

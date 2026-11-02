@@ -1,0 +1,19 @@
+framework: cornac
+beyond_accuracy: novelty coverage entropy gini
+user_segments: 0 25 75
+seeds: 0 10
+top_k: 10
+cutoffs: 10
+results_dir: ./results/synthetic
+cornac:
+  models:
+    - name: BPR
+      params: {k: 20, max_iter: 50, learning_rate: 0.05, lambda_reg: 0.001}
+    - name: MostPop
+      params: {}
+    - name: MF
+      params: {k: 10, max_iter: 50}
+  metrics:
+    - NDCG: {k: 10}
+    - Recall: {k: 10}
+    - RMSE

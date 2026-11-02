@@ -1,0 +1,45 @@
+# (2) Data processing - Figure 3, left panel
+dataset: amazon_All_Beauty
+source: amazon                 # amazon | yelp | custom
+input:
+  reviews:
+    file_name: All_Beauty
+    path: ./data/input/amazon_All_Beauty
+    format: jsonl              # csv | json | jsonl
+    separator: "\t"            # csv only
+  items:                       # optional item metadata (categories, titles)
+    file_name: meta_All_Beauty
+    path: ./data/input/amazon_All_Beauty
+    format: jsonl
+# map dataset columns onto RecProbe fields (only needed when they differ from the preset)
+fields: {}
+#  user_id: reviewerID
+#  item_id: asin
+#  timestamp: unixReviewTime
+#  rating: overall
+#  review_text: reviewText
+output:
+  reviews:
+    path: ./data/output/amazon_All_Beauty
+    format: csv
+    separator: "\t"
+kcore: 3
+min_rating: 1
+max_rating: null
+min_review_length: 0
+drop_duplicates: true
+rating_scale: {min: null, max: null, step: null}   # inferred from the data when null
+split:
+  training: 0.8
+  test: 0.1
+  validation: 0.1
+  noise_in_validation: false
+  noise_in_test: false
+  # random_holdout | temporal_leave_one_out | global_temporal | random_leave_one_out
+  # or a custom function "package.module:function"
+  strategy: random-holdout
+  split_timestamp: null        # global_temporal
+  validation_timestamp: null   # global_temporal
+  ensure_train_coverage: true
+random_seed: 42
+verbose: true

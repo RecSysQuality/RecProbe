@@ -1,0 +1,15 @@
+# core
+numpy>=1.24
+pandas>=2.0
+scipy>=1.10
+pyyaml>=6.0
+# evaluation libraries (install the ones you use)
+cornac>=2.0
+recbole>=1.2          # requires torch
+kmeans_pytorch        # imported by RecBole 1.2 at model lookup
+torch>=2.0
+# synthetic reviews (review-level perturbations); vllm needs a CUDA GPU
+transformers>=4.40
+# vllm>=0.5
+# web interface
+streamlit>=1.30

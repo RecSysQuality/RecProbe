@@ -1,0 +1,24 @@
+# context_swap: Replace reviews with well-formed reviews written for a different item/context.
+# corrupted signal: review | observability: contextual | operation: modify
+budget: 0.1
+random_seed: 42
+context_swap:
+  target: item
+  selection_strategy: uniform
+  top_k: null
+  min_per_node: 1
+  max_per_node: 5
+  target_ids: null
+  strategy: donor
+  min_length_of_review: 5
+  max_length_of_review: 80
+  llm_configuration:
+    backend: null
+    model: meta-llama/Meta-Llama-3.1-8B-Instruct
+    huggingface_token: null
+    temperature: 0.9
+    top_p: 0.95
+    max_new_tokens: null
+    prompt: Write a short {polarity} customer review of '{item}' that describes it
+      as ideal for a use or context completely unrelated to what a {category} is meant
+      for.

@@ -1,0 +1,37 @@
+# review_burst: Burst of LLM-generated reviews on target items inside a time window.
+# corrupted signal: review | observability: collective | operation: add
+budget: 0.1
+random_seed: 42
+review_burst:
+  target: item
+  selection_strategy: top
+  top_k: null
+  min_per_node: 10
+  max_per_node: 50
+  target_ids: null
+  item_choice: uniform
+  rating_behavior:
+    min_rating: null
+    max_rating: null
+    sampling_strategy: uniform
+  temporal_behavior:
+    start_timestamp: null
+    end_timestamp: null
+    window:
+      days: 1
+      hours: 0
+      minutes: 0
+  fake_users:
+    use_fake_users: true
+    fake_behavior: random
+    filler_size: 0
+  min_length_of_review: 10
+  max_length_of_review: 100
+  llm_configuration:
+    backend: null
+    model: meta-llama/Meta-Llama-3.1-8B-Instruct
+    huggingface_token: null
+    temperature: 0.9
+    top_p: 0.95
+    max_new_tokens: null
+    prompt: Write a very short, generic {polarity} review of {item}.

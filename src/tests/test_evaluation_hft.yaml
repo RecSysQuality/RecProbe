@@ -1,0 +1,11 @@
+framework: cornac
+user_segments: 0 75
+seeds: 1
+results_dir: ./results/synthetic_review
+cornac:
+  models:
+    - name: HFT
+      params: {k: 10, max_iter: 5}
+
+    - name: MostPop
+  metrics: [{NDCG: {k: 10}}, {Recall: {k: 10}}, RMSE]

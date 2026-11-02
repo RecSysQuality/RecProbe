@@ -1,0 +1,21 @@
+# invalid_timestamp: Invalid or placeholder timestamp: future dates, Unix epoch, sentinels, pre-platform dates.
+# corrupted signal: interaction | observability: point | operation: modify
+budget: 0.1
+random_seed: 42
+invalid_timestamp:
+  target: user
+  selection_strategy: uniform
+  top_k: null
+  min_per_node: 1
+  max_per_node: 5
+  target_ids: null
+  modes:
+  - future
+  - epoch
+  mode_weights: null
+  future_offset_days:
+  - 1
+  - 3650
+  reference_time: dataset_end
+  platform_start: null
+  sentinel_value: -1

@@ -1,0 +1,19 @@
+# metadata_modification: Modify timestamps (shift or resample) while keeping them valid.
+# corrupted signal: general | observability: None | operation: modify
+budget: 0.1
+random_seed: 42
+metadata_modification:
+  target: user
+  selection_strategy: uniform
+  top_k: null
+  min_per_node: 1
+  max_per_node: 5
+  target_ids: null
+  mode: shift
+  shift:
+    days: 30
+    hours: 0
+    minutes: 0
+  temporal_behavior:
+    start_timestamp: null
+    end_timestamp: null

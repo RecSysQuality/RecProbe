@@ -1,0 +1,18 @@
+# invalid_rating: Out-of-range, wrong-granularity or placeholder ratings.
+# corrupted signal: rating | observability: point | operation: modify
+budget: 0.1
+random_seed: 42
+invalid_rating:
+  target: user
+  selection_strategy: uniform
+  top_k: null
+  min_per_node: 1
+  max_per_node: 5
+  target_ids: null
+  modes:
+  - out_of_range
+  - wrong_granularity
+  - placeholder
+  mode_weights: null
+  out_of_range_values: null
+  placeholder_value: 0

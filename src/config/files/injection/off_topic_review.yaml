@@ -1,0 +1,24 @@
+# off_topic_review: Replace (or extend) reviews with text about shipping, delivery or the seller.
+# corrupted signal: review | observability: point | operation: modify
+budget: 0.1
+random_seed: 42
+off_topic_review:
+  target: user
+  selection_strategy: uniform
+  top_k: null
+  min_per_node: 1
+  max_per_node: 5
+  target_ids: null
+  mode: replace
+  min_length_of_review: 5
+  max_length_of_review: 60
+  llm_configuration:
+    backend: null
+    model: meta-llama/Meta-Llama-3.1-8B-Instruct
+    huggingface_token: null
+    temperature: 0.9
+    top_p: 0.95
+    max_new_tokens: null
+    prompt: Write a short customer review that talks only about the shipping, the
+      delivery or the seller's behaviour, without saying anything about the product
+      itself.

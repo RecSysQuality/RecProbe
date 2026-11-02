@@ -1,0 +1,29 @@
+# sentiment_flip: Invert the sentiment of the review text while keeping the rating.
+# corrupted signal: review | observability: contextual | operation: modify
+budget: 0.1
+random_seed: 42
+sentiment_flip:
+  target: user
+  selection_strategy: uniform
+  top_k: null
+  min_per_node: 1
+  max_per_node: 5
+  target_ids: null
+  strategy: llm
+  polarity_thresholds:
+    low: null
+    high: null
+  min_length_of_review: 3
+  max_length_of_review: 100
+  llm_configuration:
+    backend: null
+    model: meta-llama/Meta-Llama-3.1-8B-Instruct
+    huggingface_token: null
+    temperature: 0.9
+    top_p: 0.95
+    max_new_tokens: null
+    prompt: 'Rewrite the following product review so that it expresses a clearly {polarity}
+      opinion, keeping the same product and topics. Return only the rewritten review.
+
+
+      Review: {review}'

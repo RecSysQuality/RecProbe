@@ -1,0 +1,27 @@
+# rating_burst: Burst of ratings on target items inside a time window, shifting their distribution.
+# corrupted signal: rating | observability: collective | operation: add
+budget: 0.1
+random_seed: 42
+rating_burst:
+  target: item
+  selection_strategy: top
+  top_k: null
+  min_per_node: 10
+  max_per_node: 50
+  target_ids: null
+  item_choice: uniform
+  rating_behavior:
+    min_rating: null
+    max_rating: null
+    sampling_strategy: uniform
+  temporal_behavior:
+    start_timestamp: null
+    end_timestamp: null
+    window:
+      days: 1
+      hours: 0
+      minutes: 0
+  fake_users:
+    use_fake_users: true
+    fake_behavior: random
+    filler_size: 0

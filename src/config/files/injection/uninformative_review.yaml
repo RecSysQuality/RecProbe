@@ -1,0 +1,26 @@
+# uninformative_review: Replace reviews with missing, truncated or content-free text.
+# corrupted signal: review | observability: point | operation: modify
+budget: 0.1
+random_seed: 42
+uninformative_review:
+  target: user
+  selection_strategy: uniform
+  top_k: null
+  min_per_node: 1
+  max_per_node: 5
+  target_ids: null
+  modes:
+  - missing
+  - short
+  - content_free
+  mode_weights: null
+  missing_value: ''
+  short_length: 2
+  content_free_tokens:
+  - .
+  - ok
+  - '...'
+  - '-'
+  - '!!'
+  - fine
+  - n/a

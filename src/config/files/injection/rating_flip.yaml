@@ -1,0 +1,12 @@
+# rating_flip: Reverse the polarity of ratings: r' = min + max - r.
+# corrupted signal: rating | observability: contextual | operation: modify
+budget: 0.1
+random_seed: 42
+rating_flip:
+  target: user
+  selection_strategy: uniform
+  top_k: null
+  min_per_node: 1
+  max_per_node: 5
+  target_ids: null
+  skip_neutral: true

@@ -1,0 +1,15 @@
+# history_inconsistent_rating: Replace ratings with values far from the user's (or item's) rating distribution.
+# corrupted signal: rating | observability: contextual | operation: modify
+budget: 0.1
+random_seed: 42
+history_inconsistent_rating:
+  target: user
+  selection_strategy: uniform
+  top_k: null
+  min_per_node: 1
+  max_per_node: 3
+  target_ids: null
+  reference: user
+  min_history: 3
+  min_deviation: 2.0
+  value: extreme

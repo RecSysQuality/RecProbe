@@ -1,0 +1,27 @@
+# review_shilling: Fake reviewer group: LLM target reviews (push/nuke) plus plausible filler reviews.
+# corrupted signal: review | observability: collective | operation: add
+budget: 0.1
+random_seed: 42
+review_shilling:
+  selection_strategy: uniform
+  top_k: null
+  target_ids: null
+  num_targets: 1
+  direction: push
+  filler_strategy: random
+  filler_size: 20
+  popular_pool: 0.1
+  segment_items: null
+  temporal_behavior:
+    start_timestamp: null
+    end_timestamp: null
+  min_length_of_review: 10
+  max_length_of_review: 100
+  llm_configuration:
+    backend: null
+    model: meta-llama/Meta-Llama-3.1-8B-Instruct
+    huggingface_token: null
+    temperature: 0.9
+    top_p: 0.95
+    max_new_tokens: null
+    prompt: Write a short, enthusiastic {polarity} review of {item}.

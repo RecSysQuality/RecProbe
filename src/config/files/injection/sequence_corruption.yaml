@@ -1,0 +1,18 @@
+# sequence_corruption: Insert items inconsistent with the user's history at a position inside the sequence.
+# corrupted signal: interaction | observability: contextual | operation: add
+budget: 0.1
+random_seed: 42
+sequence_corruption:
+  target: user
+  selection_strategy: uniform
+  top_k: null
+  min_per_node: 1
+  max_per_node: 3
+  target_ids: null
+  inconsistency: cooccurrence
+  candidate_pool: 200
+  min_history: 2
+  rating_behavior:
+    min_rating: null
+    max_rating: null
+    sampling_strategy: gaussian

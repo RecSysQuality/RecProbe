@@ -1,0 +1,6 @@
+budget: 100
+interaction_shilling:
+  selection_strategy: bottom
+  num_targets: 2
+  filler_strategy: popular
+  filler_size: 15

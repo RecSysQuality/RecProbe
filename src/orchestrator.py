@@ -1,26 +1,27 @@
-from injectors.interactions.hybrid_injector import HybridNoiseInjector
+from injectors.general_injector import GeneralNoiseInjector
+from injectors.interactions.interaction_injector import InteractionNoiseInjector
 from injectors.interactions.rating_injector import RatingNoiseInjector
 from injectors.interactions.review_injector import ReviewNoiseInjector
-#from NoiseInjector.injectors.interactions.review_injector import ReviewNoiseInjector
-#from NoiseInjector.injectors.interactions.combined_injector import CombinedNoiseInjector
-from logger import get_logger, logging
-from datetime import datetime
+from injectors.registry import get_perturbation
+
+INJECTORS = {
+    "interaction": InteractionNoiseInjector,   # Table 1, row A
+    "rating": RatingNoiseInjector,             # Table 1, row B
+    "review": ReviewNoiseInjector,             # Table 1, row C
+    "general": GeneralNoiseInjector,           # removal / metadata (outside the taxonomy)
+}
+
 
 class NoiseOrchestrator:
-    def __init__(self,logger, config):
+    """Selects the row injector of the configured perturbation and applies it."""
+
+    def __init__(self, logger, config, items=None, rating_scale=None):
         self.config = config
         self.logger = logger
+        self.items = items
+        self.rating_scale = rating_scale
 
-    def apply(self, df, df_val, df_test):
-        obj = RatingNoiseInjector(self.logger,self.config)
-        np = self.config.noise_profile
-
-        if np == 'rating':
-            obj = RatingNoiseInjector(self.logger,self.config)
-        elif np == 'review':
-            obj = ReviewNoiseInjector(self.config,self.logger)
-        elif np == 'hybrid':
-            obj = HybridNoiseInjector(self.config,self.logger)
-        df,modified = obj.apply_noise(df,df_val, df_test)
-
-        return df,modified
+    def apply(self, df, df_val=None, df_test=None):
+        signal = get_perturbation(self.config.injection.perturbation).signal
+        injector = INJECTORS[signal](self.config, self.logger, self.items, self.rating_scale)
+        return injector.apply_noise(df, df_val, df_test)

@@ -1,0 +1,12 @@
+# record_removal: Remove existing records of the selected users/items (simulates incompleteness).
+# corrupted signal: general | observability: None | operation: remove
+budget: 0.1
+random_seed: 42
+record_removal:
+  target: user
+  selection_strategy: uniform
+  top_k: null
+  min_per_node: 1
+  max_per_node: 5
+  target_ids: null
+  keep_at_least: 1

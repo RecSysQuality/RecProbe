@@ -1,0 +1,17 @@
+# interaction_shilling: Coordinated fake profiles on the same targets, with random/popular/segment fillers.
+# corrupted signal: interaction | observability: collective | operation: add
+budget: 0.1
+random_seed: 42
+interaction_shilling:
+  selection_strategy: uniform
+  top_k: null
+  target_ids: null
+  num_targets: 1
+  direction: push
+  filler_strategy: random
+  filler_size: 20
+  popular_pool: 0.1
+  segment_items: null
+  temporal_behavior:
+    start_timestamp: null
+    end_timestamp: null

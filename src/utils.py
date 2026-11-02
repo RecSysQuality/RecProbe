@@ -1,220 +1,193 @@
-import pandas as pd
-import numpy as np
+"""General helpers shared by the RecProbe modules."""
+
+from __future__ import annotations
+
 import random
-from datetime import datetime
-import os
-import glob
-import os
-import glob
+
+import numpy as np
 import pandas as pd
-from datetime import datetime
 
+USER, ITEM, TS, RATING, REVIEW = "user_id", "item_id", "timestamp", "rating", "review_text"
+CORE_FIELDS = (USER, ITEM, TS, RATING, REVIEW)
+
+
+# --------------------------------------------------------------------------- #
+# Reproducibility                                                             #
+# --------------------------------------------------------------------------- #
+def set_seed(seed: int = 42, verbose: bool = True) -> None:
+    """Seed Python, NumPy and (if installed) PyTorch/CUDA."""
+    random.seed(seed)
+    np.random.seed(seed)
+    try:
+        import torch
+
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+    except ImportError:
+        pass
+    if verbose:
+        print(f"Random seed set to {seed}.")
+
+
+# --------------------------------------------------------------------------- #
+# Timestamps                                                                  #
+# --------------------------------------------------------------------------- #
 def parse_timestamp(ts):
-    # se è già stringa data
-
-    if ts == 0:
-        return 0
-
-    if isinstance(ts, str):
-        return pd.to_datetime(ts, errors="raise")
-
+    """Single value -> pandas Timestamp (seconds/ms/us/ns or date strings)."""
+    if ts is None or (isinstance(ts, float) and np.isnan(ts)):
+        return pd.NaT
     if isinstance(ts, pd.Timestamp):
         return ts
-
-    # se è numerico
+    if isinstance(ts, str):
+        try:
+            ts = float(ts)
+        except ValueError:
+            return pd.to_datetime(ts, errors="raise")
     ts = int(ts)
-
-    if ts < 1e11:          # ~ seconds (1970–5138)
+    if abs(ts) < 1e11:
         return pd.to_datetime(ts, unit="s")
-    elif ts < 1e14:        # milliseconds
+    if abs(ts) < 1e14:
         return pd.to_datetime(ts, unit="ms")
-    elif ts < 1e17:        # microseconds
+    if abs(ts) < 1e17:
         return pd.to_datetime(ts, unit="us")
-    else:                  # nanoseconds
-        return pd.to_datetime(ts, unit="ns")
+    return pd.to_datetime(ts, unit="ns")
 
 
-def per_node_budget(node_size, total_left,min_per_node,max_per_node):
-    n = np.random.randint(
-        min_per_node,
-        max_per_node+1
-    )
-    return min(n, node_size-1, total_left)
+def to_unix_seconds(series: pd.Series) -> pd.Series:
+    """Vectorised conversion of any timestamp column to Unix seconds (Int64)."""
+    if series.empty:
+        return series.astype("Int64")
+    numeric = pd.to_numeric(series, errors="coerce")
+    if numeric.notna().mean() > 0.95:
+        mag = numeric.abs().median()
+        div = 1 if mag < 1e11 else 1e3 if mag < 1e14 else 1e6 if mag < 1e17 else 1e9
+        return (numeric / div).round().astype("Int64")
+    parsed = pd.to_datetime(series, errors="coerce", utc=True)
+    out = pd.Series(pd.NA, index=series.index, dtype="Int64")
+    mask = parsed.notna()
+    # independent of the datetime resolution chosen by pandas (ns, us, s)
+    epoch = pd.Timestamp("1970-01-01", tz="UTC")
+    out[mask] = ((parsed[mask] - epoch) // pd.Timedelta(seconds=1)).astype("Int64")
+    return out
 
-def sample_ratings_optimized(mu, sigma, n, config):
 
-    if config.rating_behavior.sampling_strategy == 'gaussian':
+def date_to_unix(value) -> int | None:
+    """'2018-01-01' / 1514764800 / Timestamp -> Unix seconds."""
+    if value is None or value == "":
+        return None
+    if isinstance(value, (int, float, np.integer)) or (isinstance(value, str) and value.lstrip("-").isdigit()):
+        return int(parse_timestamp(int(value)).timestamp())
+    ts = pd.Timestamp(value)          # YAML dates arrive as datetime.date
+    if ts.tzinfo is not None:
+        ts = ts.tz_convert(None)
+    return int(ts.timestamp())
 
-        if not np.isfinite(mu):
-            mu = (config.rating_behavior.min_rating +
-                  config.rating_behavior.max_rating) / 2
 
-        if not np.isfinite(sigma) or sigma == 0:
-            sigma = 1.0
-
-        r = np.random.normal(mu, sigma, size=n)
-
-        r = np.nan_to_num(
-            r,
-            nan=mu,
-            posinf=config.rating_behavior.max_rating,
-            neginf=config.rating_behavior.min_rating
-        )
-
-        return np.clip(
-            np.rint(r),
-            config.rating_behavior.min_rating,
-            config.rating_behavior.max_rating
-        ).astype(int)
-
-    return np.random.randint(
-        config.rating_behavior.min_rating,
-        config.rating_behavior.max_rating + 1,
-        size=n
-    )
-
-def sample_ratings(base_ratings, n, config):
-
-    if config.rating_behavior.sampling_strategy == 'gaussian':
-
-        mu = np.nanmean(base_ratings)
-        sigma = np.nanstd(base_ratings)
-
-        # fallback sicuri
-        if not np.isfinite(mu):
-            mu = (config.rating_behavior.min_rating +
-                  config.rating_behavior.max_rating) / 2
-
-        if not np.isfinite(sigma) or sigma == 0:
-            sigma = 1.0
-
-        r = np.random.normal(mu, sigma, size=n)
-
-        r = np.nan_to_num(
-            r,
-            nan=mu,
-            posinf=config.rating_behavior.max_rating,
-            neginf=config.rating_behavior.min_rating
-        )
-
-        return np.clip(
-            np.rint(r),
-            config.rating_behavior.min_rating,
-            config.rating_behavior.max_rating
-        ).astype(int)
-
-    return np.random.randint(
-        config.rating_behavior.min_rating,
-        config.rating_behavior.max_rating + 1,
-        size=n
+def window_to_seconds(window) -> int:
+    """{'days':0,'hours':10,'minutes':0} -> seconds."""
+    if window is None:
+        return 0
+    if isinstance(window, (int, float)):
+        return int(window)
+    return int(
+        window.get("days", 0) * 86400
+        + window.get("hours", 0) * 3600
+        + window.get("minutes", 0) * 60
+        + window.get("seconds", 0)
     )
 
-# def sample_ratings(base_ratings, n, config):
-#     if config.rating_behavior.sampling_strategy == 'gaussian':
-#         mu, sigma = base_ratings.mean(), base_ratings.std() or 1.0
-#         r = np.random.normal(mu, sigma, size=n)
-#         return np.clip(np.rint(r), config.rating_behavior.min_rating, config.rating_behavior.max_rating).astype(int)
-#     return np.random.randint(config.rating_behavior.min_rating, config.rating_behavior.max_rating + 1, size=n)
 
-def sample_reviews(df, config):
-    if config.min_length_of_review > 0:
-        token_counts = df['review_text'].fillna("").str.split().str.len()
-        # Filtra
-        df_filtered = df[token_counts >= config.min_length_of_review].copy()
-        return df_filtered
-    return df
-
-def ordered_nodes(df, target, strategy):
-    nodes = df[target].value_counts(ascending=strategy == 'least').index.tolist()
-    if strategy == 'uniform':
-        random.shuffle(nodes)
-    return nodes
+# --------------------------------------------------------------------------- #
+# Ratings                                                                     #
+# --------------------------------------------------------------------------- #
+def snap_to_scale(values, rmin: float, rmax: float, step: float | None) -> np.ndarray:
+    """Clip to the valid range and map to the rating granularity."""
+    values = np.asarray(values, dtype=float)
+    values = np.clip(values, rmin, rmax)
+    if step:
+        values = rmin + np.round((values - rmin) / step) * step
+        values = np.clip(values, rmin, rmax)
+    return values
 
 
+def sample_ratings(n: int, rmin: float, rmax: float, step: float | None, strategy: str,
+                   rng: np.random.Generator, reference=None) -> np.ndarray:
+    """
+    Sample ``n`` ratings (Section 4.1, defect injection):
+      * uniform  -> uniformly from [rmin, rmax] on the rating grid;
+      * gaussian -> N(mean, std) of the ``reference`` ratings (target user/item),
+                    then clipped and mapped to the original rating scale.
+    """
+    if n <= 0:
+        return np.array([], dtype=float)
+    if strategy == "gaussian":
+        ref = np.asarray(reference if reference is not None else [], dtype=float)
+        ref = ref[np.isfinite(ref)]
+        mu = ref.mean() if ref.size else (rmin + rmax) / 2
+        sigma = ref.std() if ref.size > 1 and ref.std() > 0 else 1.0
+        return snap_to_scale(rng.normal(mu, sigma, size=n), rmin, rmax, step)
+    if step:
+        grid = np.arange(rmin, rmax + step / 2, step)
+        return rng.choice(grid, size=n)
+    return rng.uniform(rmin, rmax, size=n)
 
 
+def infer_rating_scale(ratings: pd.Series) -> tuple[float, float, float | None]:
+    r = pd.to_numeric(ratings, errors="coerce").dropna()
+    if r.empty:
+        return 1.0, 5.0, 1.0
+    rmin, rmax = float(r.min()), float(r.max())
+    vals = np.unique(r.values)
+    if np.allclose(vals, np.round(vals)):
+        step = 1.0
+    elif np.allclose(vals * 2, np.round(vals * 2)):
+        step = 0.5
+    else:
+        step = None
+    return rmin, rmax, step
 
-def create_unique_table(dataset):
 
-    input_folder = f"./baselines/results/{dataset}/"
-    output_file = f"./baselines/results/{dataset}/comparison_{datetime.now().strftime('%Y%m%d_%H%M%S')}.tsv"
+# --------------------------------------------------------------------------- #
+# Misc                                                                        #
+# --------------------------------------------------------------------------- #
+def token_count(series: pd.Series) -> pd.Series:
+    return series.fillna("").astype(str).str.split().str.len()
 
-    # 1️⃣ Prendo tutti i TSV
-    files = glob.glob(os.path.join(input_folder, "*.tsv"))
 
-    if not files:
-        raise ValueError("Nessun file TSV trovato nella cartella.")
+def resolve_budget(budget, n_edges: int) -> int:
+    """
+    Budget = number of interactions to add or corrupt (Section 4.1).
+    Either an absolute number (int >= 1) or a fraction of the training edges
+    (float in (0, 1], or a string such as "30%").
+    """
+    if isinstance(budget, str):
+        b = budget.strip()
+        if b.endswith("%"):
+            return int(round(float(b[:-1]) / 100 * n_edges))
+        budget = float(b)
+    if isinstance(budget, float) and 0 < budget <= 1:
+        return int(round(budget * n_edges))
+    return int(budget)
 
-    # 2️⃣ Separo clean e noisy
-    clean_files = [f for f in files if "clean" in os.path.basename(f)]
-    noisy_files = [f for f in files if "noisy" in os.path.basename(f)]
 
-    if not clean_files or not noisy_files:
-        raise ValueError("Servono almeno un file clean e uno noisy.")
-
-    # 3️⃣ Leggo e concateno tutti i clean
-    df_clean = pd.concat(
-        [pd.read_csv(f, sep="\t") for f in clean_files],
-        ignore_index=True
-    )
-
-    # 4️⃣ Leggo e concateno tutti i noisy
-    df_noisy = pd.concat(
-        [pd.read_csv(f, sep="\t") for f in noisy_files],
-        ignore_index=True
-    )
-
-    if "model" not in df_clean.columns or "model" not in df_noisy.columns:
-        raise ValueError("Entrambi i dataframe devono avere la colonna 'model'.")
-
-    # 5️⃣ Aggiungo suffissi
-    df_clean = df_clean.copy()
-    df_noisy = df_noisy.copy()
-
-    df_clean["model"] = df_clean["model"].astype(str) + "_clean"
-    df_noisy["model"] = df_noisy["model"].astype(str) + "_noisy"
-
-    # 6️⃣ Base model
-    df_clean["base_model"] = df_clean["model"].str.replace("_clean", "", regex=False)
-    df_noisy["base_model"] = df_noisy["model"].str.replace("_noisy", "", regex=False)
-
-    # 7️⃣ Merge globale
-    merged = pd.merge(
-        df_clean,
-        df_noisy,
-        on="base_model",
-        how="outer",
-        suffixes=("_clean", "_noisy")
-    )
-
-    # 8️⃣ Alterno righe
-    rows = []
-
-    for _, row in merged.iterrows():
-
-        # CLEAN
-        clean_cols = [c for c in merged.columns if c.endswith("_clean")]
-        if not pd.isna(row.get("model_clean")):
-            clean_row = {
-                col.replace("_clean", ""): row[col]
-                for col in clean_cols
-            }
-            rows.append(clean_row)
-
-        # NOISY
-        noisy_cols = [c for c in merged.columns if c.endswith("_noisy")]
-        if not pd.isna(row.get("model_noisy")):
-            noisy_row = {
-                col.replace("_noisy", ""): row[col]
-                for col in noisy_cols
-            }
-            rows.append(noisy_row)
-
-    final_df = pd.DataFrame(rows)
-
-    # 9️⃣ Salvo
-    final_df.to_csv(output_file, sep="\t", index=False)
-
-    print(f"File salvato come: {output_file}")
-
-    return final_df
+def ordered_nodes(popularity: pd.Series, strategy: str, rng: np.random.Generator,
+                  top_k: int | None = None) -> list:
+    """
+    Order users/items for target selection:
+      uniform -> random order;  top -> most popular first;  bottom -> least popular first.
+    """
+    strategy = {"least": "bottom", "most": "top", "random": "uniform"}.get(strategy, strategy)
+    if strategy == "uniform":
+        nodes = list(popularity.index)
+        rng.shuffle(nodes)
+        return nodes
+    if strategy not in ("top", "bottom"):
+        raise ValueError(f"Unknown selection_strategy '{strategy}' (uniform | top | bottom)")
+    # stable sort with random tie-breaking
+    shuffled = popularity.sample(frac=1.0, random_state=int(rng.integers(2**31)))
+    ordered = shuffled.sort_values(ascending=(strategy == "bottom"), kind="mergesort")
+    nodes = list(ordered.index)
+    return nodes[:top_k] if top_k else nodes
