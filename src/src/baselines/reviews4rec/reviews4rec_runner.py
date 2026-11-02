@@ -33,7 +33,7 @@ import subprocess
 
 import pandas as pd
 
-from src.baselines.base_runner import BaseRunner, RunOutput
+from baselines.base_runner import BaseRunner, RunOutput
 from utils import ITEM, RATING, USER
 
 

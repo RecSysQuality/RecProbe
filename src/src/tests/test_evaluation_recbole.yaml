@@ -2,7 +2,7 @@ framework: recbole
 user_segments: 0 75
 seeds: 0
 top_k: 10
-results_dir: ./results/synthetic_recbole
+results_dir: ./baselines/results/synthetic_recbole
 recbole:
   params: {epochs: 3, train_batch_size: 256, stopping_step: 2, device: cpu, use_gpu: false}
   models:

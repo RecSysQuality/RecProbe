@@ -18,12 +18,12 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-from src.baselines.cornac.cornac_runner import CornacExperimentRunner
-from src.baselines.custom.custom_runner import CustomExperimentRunner
-from src.baselines.recbole.recbole_runner import RecBoleExperimentRunner
-from src.baselines.reviews4rec.reviews4rec_runner import Reviews4RecRunner
-from src.evaluation import segments as seg
-from src.evaluation.metrics import accuracy_per_user, aggregate_users, beyond_accuracy, custom_metrics
+from baselines.cornac.cornac_runner import CornacExperimentRunner
+from baselines.custom.custom_runner import CustomExperimentRunner
+from baselines.recbole.recbole_runner import RecBoleExperimentRunner
+from baselines.reviews4rec.reviews4rec_runner import Reviews4RecRunner
+from evaluation import segments as seg
+from evaluation.metrics import accuracy_per_user, aggregate_users, beyond_accuracy, custom_metrics
 from utils import ITEM, USER, set_seed
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -49,7 +49,7 @@ class BaselinesOrchestrator:
         self.fw_cfg = self.ev.get(self.framework) or {}
         if not self.fw_cfg.get("models"):
             raise ValueError(f"No models configured under '{self.framework}' in evaluation.yaml")
-        self.results_dir = self.ev.results_dir or os.path.join(BASE_DIR, "results", config.dataset)
+        self.results_dir = self.ev.results_dir or os.path.join(BASE_DIR, "baselines", "results", config.dataset)
         os.makedirs(self.results_dir, exist_ok=True)
         self.runner = RUNNERS[self.framework](self.fw_cfg, self.ev, logger,
                                               os.path.join(self.results_dir, "_work"))

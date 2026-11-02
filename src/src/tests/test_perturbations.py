@@ -131,7 +131,7 @@ def test_global_temporal_no_leakage(tmp_path):
 
 
 def test_beyond_accuracy_known_values():
-    from src.evaluation.metrics import beyond_accuracy
+    from evaluation.metrics import beyond_accuracy
     ranked = pd.DataFrame({"user_id": ["a", "a", "b", "b"], "item_id": ["x", "y", "x", "y"], "rank": [1, 2, 1, 2]})
     pop = pd.Series({"x": 2, "y": 1, "z": 1})
     m = beyond_accuracy(ranked, {"a", "b"}, 2, ["x", "y", "z"], pop, 4)

@@ -2,7 +2,7 @@ framework: custom
 user_segments: 0 50
 user_segment_ids: {heavy_demo: [U0001, U0002, U0003, U0010]}
 seeds: 0 1 2
-results_dir: ./results/synthetic_custom
+results_dir: ./baselines/results/synthetic_custom
 custom_metrics: ["tests.example_metric:target_share"]
 custom:
   models: [{name: MostPop}, {name: Random}]

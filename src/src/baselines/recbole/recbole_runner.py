@@ -19,8 +19,8 @@ import os
 
 import pandas as pd
 
-from src.baselines.base_runner import BaseRunner, RunOutput
-from src.evaluation.metrics import parse_metric_list
+from baselines.base_runner import BaseRunner, RunOutput
+from evaluation.metrics import parse_metric_list
 from utils import ITEM, RATING, TS, USER
 
 
@@ -46,6 +46,11 @@ class RecBoleExperimentRunner(BaseRunner):
             if TS in df.columns and df[TS].notna().any():
                 cols[TS] = "timestamp:float"
             out = df[list(cols)].rename(columns=cols)
+            # RecBole 1.2 fills missing float values with the column mean through a chained
+            # inplace fillna, which has no effect under pandas >= 3: do it here instead.
+            for c in cols.values():
+                if c.endswith(":float") and out[c].isna().any():
+                    out[c] = out[c].astype(float).fillna(out[c].astype(float).mean())
             out.to_csv(os.path.join(folder, f"{name}.{split}.inter"), sep="\t", index=False)
 
     def run(self, model_cfg, train, val, test, seed):

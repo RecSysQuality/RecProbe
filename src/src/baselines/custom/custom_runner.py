@@ -21,8 +21,8 @@ import importlib
 import numpy as np
 import pandas as pd
 
-from src.baselines.base_runner import BaseRunner, RunOutput
-from src.evaluation.metrics import accuracy_per_user, aggregate_users
+from baselines.base_runner import BaseRunner, RunOutput
+from evaluation.metrics import accuracy_per_user, aggregate_users
 from utils import ITEM, RATING, USER
 
 

@@ -4,7 +4,7 @@ user_segments: 0 25 75
 seeds: 0 10
 top_k: 10
 cutoffs: 10
-results_dir: ./results/synthetic
+results_dir: ./baselines/results/synthetic
 cornac:
   models:
     - name: BPR

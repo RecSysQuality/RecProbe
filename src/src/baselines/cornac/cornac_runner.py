@@ -17,8 +17,8 @@ import inspect
 import numpy as np
 import pandas as pd
 
-from src.baselines.base_runner import BaseRunner, RunOutput, topk_from_scores
-from src.evaluation.metrics import parse_metric_list
+from baselines.base_runner import BaseRunner, RunOutput, topk_from_scores
+from evaluation.metrics import parse_metric_list
 from utils import ITEM, RATING, REVIEW, USER
 
 TEXT_MODALITY = {
