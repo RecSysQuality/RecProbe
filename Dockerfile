@@ -1,32 +1,21 @@
-# ==================================================
-FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
+# RecProbe execution environment.
+# GPU image so that vLLM can be used for review generation; for CPU-only use,
+# replace the base image with python:3.11-slim and drop vllm.
+FROM nvidia/cuda:12.1.1-runtime-ubuntu22.04
 
-RUN apt-get update && apt-get install -y \
-    python3.10 \
-    python3.10-dev \
-    python3-pip \
-    git \
-    curl \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
+ENV DEBIAN_FRONTEND=noninteractive PYTHONUNBUFFERED=1
+RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-pip git && \
+    rm -rf /var/lib/apt/lists/*
 
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1
-
-
-RUN python -m pip install --upgrade pip
-
-WORKDIR /code/src
-ENV PYTHONPATH=/code
-COPY . /code
+WORKDIR /code
 COPY requirements.txt .
+RUN pip3 install --no-cache-dir -r requirements.txt && pip3 install --no-cache-dir vllm
 
-# the following to let recbole and cognac coexist, feel free to move to requirements if only one of them is needed.
-RUN pip install --no-cache-dir Cython numpy==1.25.2 scipy
-RUN pip install --no-cache-dir --no-build-isolation -r requirements.txt
-RUN pip install --no-cache-dir dgl -f https://data.dgl.ai/wheels/cu124/repo.html
-RUN pip install torch==2.5.1 --index-url https://download.pytorch.org/whl/cu124
+COPY src/ /code/src/
+# all commands run from src/, where main.py and the relative paths of the YAML files live
+WORKDIR /code/src
 
-
-ENV PATH="/root/.local/bin:${PATH}"
-
-CMD ["/bin/bash"]
+EXPOSE 8501
+# default: web interface. Override to run the pipeline, e.g.
+#   docker run --gpus all -v ./src/:/code/src/ recprobe python3 main.py --data ... --injection ... --evaluation ...
+CMD ["streamlit", "run", "streamlit_app/app.py", "--server.address=0.0.0.0"]
